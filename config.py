@@ -123,8 +123,8 @@ REPORT_LOOKBACK_DAYS = 7  # 直近何日分(fetched_at基準)をレポートに�
 # https://dev.mendeley.com で無料でアプリ登録し、CLIENT_ID/CLIENT_SECRETを取得。
 # アプリ登録時の「Redirect URL」は、下の MENDELEY_REDIRECT_URI と
 # 完全に一致させること(末尾のスラッシュの有無なども)。
-MENDELEY_CLIENT_ID = "24369"
-MENDELEY_CLIENT_SECRET = "EQXLiXlZDxDMwepF"
+MENDELEY_CLIENT_ID = "your_mendeley_client_id"
+MENDELEY_CLIENT_SECRET = "your_mendeley_client_secret"
 MENDELEY_REDIRECT_URI = "http://localhost:8765/oauth/callback"
 
 # 認証後のaccess_token/refresh_tokenを保存するファイル。
@@ -132,3 +132,24 @@ MENDELEY_REDIRECT_URI = "http://localhost:8765/oauth/callback"
 MENDELEY_TOKEN_FILE = "mendeley_token.json"
 
 MENDELEY_REQUEST_INTERVAL = 0.5
+
+# --- キーワード強調表示用 (Step3レポート) ---
+# タイトル・アブストラクトに含まれるかを大文字小文字を区別せず判定する。
+# 自分の研究テーマに合わせて自由に編集してください。
+KEYWORDS = [
+    "enhanced sampling",
+    "free energy",
+    "coarse-grained",
+    "replica exchange",
+    "metadynamics",
+    "molecular dynamics",
+    "folding",
+    "alphafold",
+    "alchemical free energy",
+    "free energy puterbation", 
+]
+
+# ジャーナルの見出しを「ヒットが多い」として目立たせる閾値。
+# ヒットした記事の割合、またはヒット数の合計のどちらかを満たせば目立たせる。
+JOURNAL_HOT_MIN_HIT_RATIO = 0.3
+JOURNAL_HOT_MIN_HITS = 3

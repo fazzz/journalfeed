@@ -93,6 +93,66 @@
     padding-left: 0.7rem;
     border-left: 2px solid var(--border);
   }
+  .select-row { display: flex; align-items: flex-start; gap: 0.55rem; }
+  .select-row input[type="checkbox"] {
+    margin-top: 0.4rem;
+    flex-shrink: 0;
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--accent);
+  }
+  .export-btn {
+    position: fixed;
+    bottom: 1.4rem;
+    right: 1.4rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.8rem 1.4rem;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+    z-index: 30;
+  }
+  .export-btn:hover { opacity: 0.92; }
+  .export-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .toc-item.hot {
+    background: #fbe6d3;
+    border-color: #d98a3a;
+    color: #a8531d;
+    font-weight: bold;
+  }
+  .toc-fire { margin-left: 0.15rem; }
+
+  .journal-section.hot h2 { color: #a8531d; }
+  .journal-hot-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #a8531d;
+    background: #fbe6d3;
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .article.kw-1 { border-left: 4px solid #d9b95c; }
+  .article.kw-2 { border-left: 4px solid #d98a3a; background: #fffaf3; }
+  .article.kw-3 { border-left: 4px solid #c1442b; background: #fff4f0; }
+  .kw-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: #8a5a20;
+    background: #fbe9c8;
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+    margin: 0.4rem 0 0;
+  }
+  .article.kw-3 .kw-badge { color: #8f2c1a; background: #fddcd2; }
   footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 3rem; }
 </style>
 </head>
@@ -110,20 +170,26 @@
   {% if grouped %}
   <nav class="toc">
     {% for g in grouped %}
-    <a href="#journal-{{ g.slug }}" class="toc-item">{{ g.journal }}<span class="toc-count">({{ g.count }})</span></a>
+    <a href="#journal-{{ g.slug }}" class="toc-item{% if g.is_hot %} hot{% endif %}">{{ g.journal }}<span class="toc-count">({{ g.count }})</span>{% if g.is_hot %}<span class="toc-fire">🔥</span>{% endif %}</a>
     {% endfor %}
   </nav>
   {% endif %}
 
   {% for g in grouped %}
-  <section class="journal-section" id="journal-{{ g.slug }}">
-    <h2>{{ g.journal }} ({{ g.count }})</h2>
+  <section class="journal-section{% if g.is_hot %} hot{% endif %}" id="journal-{{ g.slug }}">
+    <h2>{{ g.journal }} ({{ g.count }}){% if g.is_hot %}<span class="journal-hot-badge">🔥 ヒット多数({{ g.hit_articles }}/{{ g.count }})</span>{% endif %}</h2>
     {% for a in g.articles %}
-    <article class="article">
-      <h3><a href="{{ a.link }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
+    <article class="article kw-{{ a.hit_tier }}">
+      <div class="select-row">
+        <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}">
+        <h3><a href="{{ a.link }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
+      </div>
       <div class="meta">
         {% if a.authors %}{{ a.authors }} ・ {% endif %}{{ a.pub_date or "日付不明" }}
       </div>
+      {% if a.keyword_hits %}
+      <div class="kw-badge">🔑 一致キーワード: {{ a.keyword_hits|join(", ") }}</div>
+      {% endif %}
       <p class="summary summary-{{ a.summary_kind }}">{{ a.summary }}</p>
       {% if a.abstract %}
       <details class="abstract-toggle">
@@ -137,6 +203,47 @@
   {% endfor %}
 
   <footer>journalfeed によって自動生成されました。</footer>
+
+  <button id="export-btn" class="export-btn" disabled>
+    選択した論文を書き出す (<span id="selected-count">0</span>)
+  </button>
 </div>
+
+<script>
+(function () {
+  var checkboxes = document.querySelectorAll('.select-doi');
+  var countEl = document.getElementById('selected-count');
+  var exportBtn = document.getElementById('export-btn');
+
+  function updateState() {
+    var n = document.querySelectorAll('.select-doi:checked').length;
+    countEl.textContent = n;
+    exportBtn.disabled = n === 0;
+  }
+
+  checkboxes.forEach(function (cb) {
+    cb.addEventListener('change', updateState);
+  });
+  updateState();
+
+  exportBtn.addEventListener('click', function () {
+    var dois = Array.prototype.slice
+      .call(document.querySelectorAll('.select-doi:checked'))
+      .map(function (cb) { return cb.getAttribute('data-doi'); });
+
+    if (dois.length === 0) return;
+
+    var blob = new Blob([dois.join('\n') + '\n'], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'selected_dois.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
 </body>
 </html>

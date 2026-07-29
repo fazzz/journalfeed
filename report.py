@@ -18,7 +18,14 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from config import DB_PATH, REPORT_OUTPUT_DIR, REPORT_LOOKBACK_DAYS
+from config import (
+    DB_PATH,
+    REPORT_OUTPUT_DIR,
+    REPORT_LOOKBACK_DAYS,
+    KEYWORDS,
+    JOURNAL_HOT_MIN_HIT_RATIO,
+    JOURNAL_HOT_MIN_HITS,
+)
 from db import get_conn, recent_articles_for_report
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -30,6 +37,22 @@ def _slugify(text):
     slug = re.sub(r"[^a-zA-Z0-9\-]+", "-", (text or "").strip().lower())
     slug = re.sub(r"-{2,}", "-", slug).strip("-")
     return slug or "journal"
+
+
+def _matched_keywords(title, abstract, keywords):
+    """タイトル・アブストラクトに含まれるキーワードのリストを返す(大小文字を区別しない)。"""
+    haystack = f"{title or ''} {abstract or ''}".lower()
+    return [kw for kw in keywords if kw.lower() in haystack]
+
+
+def _hit_tier(hit_count):
+    if hit_count <= 0:
+        return 0
+    if hit_count == 1:
+        return 1
+    if hit_count == 2:
+        return 2
+    return 3
 
 
 def _build_article_view(row):
@@ -59,6 +82,9 @@ def _build_article_view(row):
         summary_text = "abstract取得待ちです。"
         summary_kind = "pending"
 
+    matched = _matched_keywords(title, abstract, KEYWORDS)
+    hit_count = len(matched)
+
     return {
         "doi": doi,
         "journal": journal,
@@ -69,6 +95,9 @@ def _build_article_view(row):
         "abstract": abstract,
         "summary": summary_text,
         "summary_kind": summary_kind,
+        "keyword_hits": matched,
+        "hit_count": hit_count,
+        "hit_tier": _hit_tier(hit_count),
     }
 
 
@@ -95,7 +124,28 @@ def build_report():
             slug = f"{base_slug}-{i}"
             i += 1
         seen_slugs.add(slug)
-        grouped.append({"journal": journal, "slug": slug, "articles": items, "count": len(items)})
+
+        total_hits = sum(a["hit_count"] for a in items)
+        hit_articles = sum(1 for a in items if a["hit_count"] > 0)
+        hit_ratio = hit_articles / len(items) if items else 0
+        is_hot = (
+            hit_ratio >= JOURNAL_HOT_MIN_HIT_RATIO or total_hits >= JOURNAL_HOT_MIN_HITS
+        )
+
+        grouped.append(
+            {
+                "journal": journal,
+                "slug": slug,
+                "articles": items,
+                "count": len(items),
+                "total_hits": total_hits,
+                "hit_articles": hit_articles,
+                "is_hot": is_hot,
+            }
+        )
+
+    # ヒットの多いジャーナルほど上に来るよう並べ替える(同率ならジャーナル名順を維持)
+    grouped.sort(key=lambda g: (-g["total_hits"], g["journal"] or ""))
 
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_DIR)),
