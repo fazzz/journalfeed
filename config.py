@@ -81,7 +81,7 @@ CROSSREF_MAILTO = "yu.yamamori@alumni.tus.ac.jp"
 CROSSREF_REQUEST_INTERVAL = 1.0
 
 # 何日前までを「新着」として問い合わせるか。
-# Crossrefへの登録(indexing)は出版から数日遅れることがあるため、
+# Crossrefへの初回登録(created)は出版から数日遅れることがあるため、
 # 1(=今日だけ)ではなく数日分のバッファを持たせて取りこぼしを防ぐ。
 # 実際の重複はDOIで排除されるので、日数を大きくしても二重登録にはならない。
 LOOKBACK_DAYS = 3
@@ -118,3 +118,17 @@ SUMMARY_REQUEST_INTERVAL = 0.5
 # --- レポート表示用 ---
 REPORT_OUTPUT_DIR = "reports"
 REPORT_LOOKBACK_DAYS = 7  # 直近何日分(fetched_at基準)をレポートに含めるか
+
+# --- Mendeley連携用 ---
+# https://dev.mendeley.com で無料でアプリ登録し、CLIENT_ID/CLIENT_SECRETを取得。
+# アプリ登録時の「Redirect URL」は、下の MENDELEY_REDIRECT_URI と
+# 完全に一致させること(末尾のスラッシュの有無なども)。
+MENDELEY_CLIENT_ID = "24369"
+MENDELEY_CLIENT_SECRET = "EQXLiXlZDxDMwepF"
+MENDELEY_REDIRECT_URI = "http://localhost:8765/oauth/callback"
+
+# 認証後のaccess_token/refresh_tokenを保存するファイル。
+# 秘密情報が入るので、gitを使うなら必ず.gitignoreに入れること。
+MENDELEY_TOKEN_FILE = "mendeley_token.json"
+
+MENDELEY_REQUEST_INTERVAL = 0.5

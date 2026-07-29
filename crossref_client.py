@@ -56,14 +56,22 @@ def _parse_work(msg):
 
 
 def fetch_new_works(issn, from_date, rows=100):
-    """指定ISSNの雑誌について、from_date以降にCrossrefへ登録(index)された
-    論文一覧を取得する。
+    """指定ISSNの雑誌について、from_date以降にCrossrefへ初めて登録(deposit)された
+    論文一覧を、新しい順に取得する。
+
+    from-index-date ではなく from-created-date を使っている点に注意。
+    from-index-date は「被引用数の更新など、他者による変更で触られただけの
+    古い記録」まで拾ってしまい、結果的に1990年代・2000年代の論文が大量に
+    混ざる不具合の原因になった。from-created-date は「Crossrefに初めて
+    登録された日」を指すため、これで本来の目的である「新着論文」に絞られる。
 
     from_date: "YYYY-MM-DD" 形式の文字列
-    戻り値: _parse_work() の辞書のリスト
+    戻り値: _parse_work() の辞書のリスト(created日時が新しい順)
     """
     params = {
-        "filter": f"issn:{issn},from-index-date:{from_date}",
+        "filter": f"issn:{issn},from-created-date:{from_date}",
+        "sort": "created",
+        "order": "desc",
         "rows": rows,
         "mailto": CROSSREF_MAILTO,
     }

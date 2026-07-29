@@ -128,3 +128,62 @@ python report.py
   - abstractが無い(赤系斜体、「要約はありません(タイトルのみ)」)
 - `config.py` の `REPORT_LOOKBACK_DAYS` で対象期間、`REPORT_OUTPUT_DIR` で
   出力先フォルダ名を変更できます。
+
+## 既知の不具合と修正 (from-index-date -> from-created-date)
+
+当初 `from-index-date` フィルタを使っていましたが、これは「被引用数の更新など
+第三者による変更で触られただけの古い記録」まで拾ってしまう仕様のため、
+1990年代・2000年代の論文が大量に混ざる不具合が発生しました。
+
+`from-created-date`(Crossrefへの初回登録日)+ `sort=created&order=desc` に
+変更し、本来の目的である「新着論文」に絞り込むよう修正済みです。
+
+もし再びこの現象(古い論文が大量に混ざる)が起きたら、DBを一度作り直して
+(`articles.db` を削除して `main.py` から再実行)から様子を見てください。
+
+## Mendeley連携
+
+Mendeleyへの「自分のライブラリに文献を追加する」操作は、読み取り専用の
+Catalog検索とは異なり、**ユーザー本人によるログイン許可(OAuth2 authorization_code
+フロー)が必要**です。そのため最初に1回だけブラウザでの認証手順が入ります。
+
+### 1. アプリ登録
+
+1. https://dev.mendeley.com で(既存のMendeleyアカウントで)サインインし、
+   「My Apps」からアプリを新規登録する。
+2. Redirect URL には `http://localhost:8765/oauth/callback` を設定する
+   (`config.py` の `MENDELEY_REDIRECT_URI` と完全に一致させること)。
+3. 発行された `client_id` / `client_secret` を `config.py` の
+   `MENDELEY_CLIENT_ID` / `MENDELEY_CLIENT_SECRET` に設定する。
+
+### 2. 初回認証(1回だけ)
+
+```bash
+python mendeley_auth.py
+```
+
+ブラウザが開くのでMendeleyにログインして許可すると、ローカルの一時サーバーが
+認可コードを受け取り、`mendeley_token.json` に access_token / refresh_token を
+保存する。以降はこのファイルを使って自動的にトークンが更新されるので、
+基本的にこのスクリプトの再実行は不要(refresh_tokenが失効した場合を除く)。
+
+`mendeley_token.json` には認証情報が入るため、gitには絶対にコミットしない
+こと(`.gitignore` に追加済み)。
+
+### 3. 登録の実行
+
+```bash
+python mendeley_sync.py
+```
+
+DB内で `mendeley_added = 0` の記事(まだMendeleyに登録していない記事)を
+1件ずつMendeleyライブラリに登録し、成功したものから `mendeley_added = 1` に
+更新する。何度実行しても、既に登録済みの記事は対象から外れるので安全(冪等)。
+
+### 補足
+
+- Mendeleyに登録するドキュメントのtypeは "journal" 固定にしている。
+- 著者名は "Taro Yamada, Hanako Suzuki" のようなカンマ区切り文字列を、
+  最後の単語をlast_name・残りをfirst_nameとする簡易ルールで分割している。
+  複合姓や特殊な表記では正しく分割できない場合があるので、その場合は
+  Mendeley側で手動修正してください。

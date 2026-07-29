@@ -128,3 +128,21 @@ def recent_articles_for_report(conn, since_fetched_at):
         """,
         (since_fetched_at,),
     ).fetchall()
+
+
+def unsynced_to_mendeley(conn):
+    """まだMendeleyに登録していない記事一覧を返す
+    (doi, journal, title, authors, pub_date, abstract)。"""
+    return conn.execute(
+        """
+        SELECT doi, journal, title, authors, pub_date, abstract
+        FROM articles
+        WHERE mendeley_added = 0
+        """
+    ).fetchall()
+
+
+def mark_mendeley_synced(conn, doi):
+    """Mendeleyへの登録が完了した記事に印を付ける。"""
+    conn.execute("UPDATE articles SET mendeley_added = 1 WHERE doi = ?", (doi,))
+    conn.commit()
