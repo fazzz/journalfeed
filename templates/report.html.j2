@@ -29,7 +29,7 @@
   header { margin-bottom: 2.5rem; }
   header h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
   header p { color: var(--muted); margin: 0; font-size: 0.9rem; }
-  .journal-section { margin-bottom: 2.4rem; scroll-margin-top: 6rem; }
+  .journal-section { margin-bottom: 2.4rem; scroll-margin-top: 8.5rem; }
   .journal-section h2 {
     font-size: 1.05rem;
     border-bottom: 1px solid var(--border);
@@ -42,24 +42,27 @@
     z-index: 10;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem 0.6rem;
+    align-content: flex-start;
+    gap: 0.3rem 0.4rem;
     background: var(--bg);
-    padding: 0.9rem 0 1rem;
+    padding: 0.7rem 0.2rem 0.8rem;
     margin-bottom: 1.6rem;
     border-bottom: 1px solid var(--border);
+    max-height: 7rem;
+    overflow-y: auto;
   }
   .toc-item {
-    font-size: 0.8rem;
+    font-size: 0.68rem;
     color: var(--accent);
     text-decoration: none;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 0.25rem 0.75rem;
+    padding: 0.15rem 0.55rem;
     white-space: nowrap;
   }
   .toc-item:hover { background: var(--summary-ok-bg); }
-  .toc-count { color: var(--muted); font-size: 0.76rem; margin-left: 0.15rem; }
+  .toc-count { color: var(--muted); font-size: 0.64rem; margin-left: 0.1rem; }
   .article {
     background: var(--card-bg);
     border: 1px solid var(--border);
