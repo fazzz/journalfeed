@@ -105,3 +105,26 @@ def title_only_articles(conn):
     return conn.execute(
         "SELECT doi, journal, title, link FROM articles WHERE abstract_status = 'unavailable'"
     ).fetchall()
+
+
+def update_summary(conn, doi, summary_ja):
+    """LLMが生成した日本語要約を保存する。"""
+    conn.execute(
+        "UPDATE articles SET summary_ja = ? WHERE doi = ?",
+        (summary_ja, doi),
+    )
+    conn.commit()
+
+
+def recent_articles_for_report(conn, since_fetched_at):
+    """fetched_at が since_fetched_at 以降の記事を新しい順に返す(Step3のレポート生成用)。"""
+    return conn.execute(
+        """
+        SELECT doi, journal, title, authors, pub_date, link,
+               abstract, abstract_status, summary_ja, fetched_at
+        FROM articles
+        WHERE fetched_at >= ?
+        ORDER BY fetched_at DESC
+        """,
+        (since_fetched_at,),
+    ).fetchall()

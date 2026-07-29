@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>journalfeed レポート ({{ generated_at }})</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --card-bg: #ffffff;
+    --border: #e5e1da;
+    --text: #2b2b28;
+    --muted: #8a8478;
+    --accent: #7a5c3e;
+    --summary-ok: #2f5233;
+    --summary-ok-bg: #eef4ee;
+    --summary-pending: #8a8478;
+    --summary-none: #a5443a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1.2rem 4rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Sans", "Yu Gothic", "Segoe UI", sans-serif;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { margin-bottom: 2.5rem; }
+  header h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
+  header p { color: var(--muted); margin: 0; font-size: 0.9rem; }
+  .journal-section { margin-bottom: 2.4rem; }
+  .journal-section h2 {
+    font-size: 1.05rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+    color: var(--accent);
+  }
+  .article {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.9rem;
+  }
+  .article h3 { margin: 0 0 0.3rem; font-size: 1.02rem; line-height: 1.4; }
+  .article h3 a { color: var(--text); text-decoration: none; }
+  .article h3 a:hover { text-decoration: underline; }
+  .meta { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.6rem; }
+  .summary { font-size: 0.92rem; margin: 0; padding: 0.55rem 0.7rem; border-radius: 6px; }
+  .summary.summary-ok { background: var(--summary-ok-bg); color: var(--summary-ok); }
+  .summary.summary-pending { color: var(--summary-pending); font-style: italic; background: transparent; padding-left: 0; }
+  .summary.summary-none { color: var(--summary-none); font-style: italic; background: transparent; padding-left: 0; }
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 3rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>journalfeed レポート</h1>
+    <p>生成日: {{ generated_at }} / 直近 {{ lookback_days }} 日分・{{ total_count }} 件</p>
+  </header>
+
+  {% if not grouped %}
+    <p>この期間に該当する記事はありません。</p>
+  {% endif %}
+
+  {% for journal, items in grouped %}
+  <section class="journal-section">
+    <h2>{{ journal }} ({{ items|length }})</h2>
+    {% for a in items %}
+    <article class="article">
+      <h3><a href="{{ a.link }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
+      <div class="meta">
+        {% if a.authors %}{{ a.authors }} ・ {% endif %}{{ a.pub_date or "日付不明" }}
+      </div>
+      <p class="summary summary-{{ a.summary_kind }}">{{ a.summary }}</p>
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <footer>journalfeed によって自動生成されました。</footer>
+</div>
+</body>
+</html>

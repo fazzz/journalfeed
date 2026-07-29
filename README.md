@@ -73,3 +73,58 @@ abstractのカバー率が高いOpenAlex APIで別途補完します。
    記事は `abstract_status = 'unavailable'` にし、以降は問い合わせ対象から外れる。
 3. Step2のLLM要約では、`summarizable_articles()` で abstract のある記事だけを要約対象にし、
    `title_only_articles()` で unavailable な記事をタイトルのみの一覧として別扱いする想定。
+
+## Step 2: LLM要約 (Claude API)
+
+abstractのある記事について、Claude API (Anthropic) で日本語の要約(3行程度)を
+生成し、`summary_ja` 列に保存します。
+
+1. `config.py` の `ANTHROPIC_API_KEY` を設定する。
+   環境変数 `ANTHROPIC_API_KEY` からも読めるようになっているので、
+   GitHub Actions等で自動化する場合はSecretsに登録して環境変数経由で渡すのがおすすめ
+   (config.pyに直書きしたキーをうっかりgitにコミットしないよう注意)。
+2. 実行:
+   ```bash
+   python summarize.py
+   ```
+- 要約はデフォルトで `claude-haiku-4-5-20251001` を使用(定型的な要約タスクなので
+  コスト効率重視)。質が物足りなければ `config.py` の `SUMMARY_MODEL` を
+  `"claude-sonnet-5"` に変更してください。
+- `abstract_status = 'unavailable'`(タイトルのみ扱い)の記事は要約対象から自動的に
+  除外されます。
+- 既に `summary_ja` が入っている記事は再要約されません(冪等)。
+
+### 動作確認の手順(初回はここから)
+
+1. APIキーを設定(環境変数推奨): `export ANTHROPIC_API_KEY="sk-ant-..."`
+2. まず3件だけ試す:
+   ```bash
+   python summarize.py --limit 3
+   ```
+   生成された要約が表示されるので、内容・トーン・長さを確認してください。
+3. 問題なければ残りを全件処理:
+   ```bash
+   python summarize.py
+   ```
+   (`--limit` を付けなければ全件。既に要約済みの記事はスキップされるので、
+   3件だけ試した後にもう一度実行しても二重に課金・処理されません。)
+
+## Step 3: レポート表示 (HTML生成)
+
+DB内の直近の記事(既定: `fetched_at` から `REPORT_LOOKBACK_DAYS`=7日分)を
+ジャーナルごとにまとめ、静的HTMLレポートを生成します。LLM要約(Step2)を
+まだ実行していなくても動作し、その場合は「要約待ち」等の表示になります。
+
+```bash
+python report.py
+```
+
+- `reports/report_YYYY-MM-DD.html`(その日の日付付き)と `reports/latest.html`
+  (常に最新版を指す)の2つが生成されます。
+- `latest.html` をブラウザで開けば見た目を確認できます。
+- 表示は記事ごとに3パターン:
+  - 要約あり(緑背景)
+  - abstractはあるが未要約(グレー斜体、「要約はまだ生成されていません」)
+  - abstractが無い(赤系斜体、「要約はありません(タイトルのみ)」)
+- `config.py` の `REPORT_LOOKBACK_DAYS` で対象期間、`REPORT_OUTPUT_DIR` で
+  出力先フォルダ名を変更できます。

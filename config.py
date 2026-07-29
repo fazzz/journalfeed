@@ -95,3 +95,26 @@ ROWS_PER_QUERY = 100
 # (DOI単体でのlookupは無料枠の対象外で、実質無制限に使えます)
 OPENALEX_API_KEY = "aw92bKl5NYN9jqcA6x3tg8"
 OPENALEX_REQUEST_INTERVAL = 0.2
+
+# 補完を諦めるまでの猶予日数。
+# fetched_at からこの日数を過ぎてもabstractが見つからない記事は
+# abstract_status を 'unavailable' にし、以降は問い合わせをスキップする
+# (LLM要約フェーズではタイトルのみ扱いか、要約対象から除外する)。
+ABSTRACT_GIVEUP_DAYS = 7
+
+# --- LLM要約用 (Anthropic API) ---
+# GitHub Actions等で自動化する際にconfig.pyへキーを直書きしなくて済むよう、
+# 環境変数 ANTHROPIC_API_KEY からも読めるようにしている。
+# (config.py に直接書いてもよいが、gitにコミットしないよう .gitignore を忘れずに)
+import os
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "your_anthropic_api_key")
+
+# 定型的な要約タスクなのでコスト効率のよいHaikuを既定にしている。
+# 要約の質が物足りない場合は "claude-sonnet-5" に変更する。
+SUMMARY_MODEL = "claude-haiku-4-5-20251001"
+SUMMARY_MAX_TOKENS = 300
+SUMMARY_REQUEST_INTERVAL = 0.5
+
+# --- レポート表示用 ---
+REPORT_OUTPUT_DIR = "reports"
+REPORT_LOOKBACK_DAYS = 7  # 直近何日分(fetched_at基準)をレポートに含めるか
