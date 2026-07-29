@@ -11,6 +11,7 @@ LLM要約(Step2)をまだ実行していなくても、そのまま実行でき�
     python report.py
 """
 
+import re
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -22,6 +23,13 @@ from db import get_conn, recent_articles_for_report
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = BASE_DIR / "templates"
+
+
+def _slugify(text):
+    """ジャーナル名をアンカーリンク用のIDに変換する。"""
+    slug = re.sub(r"[^a-zA-Z0-9\-]+", "-", (text or "").strip().lower())
+    slug = re.sub(r"-{2,}", "-", slug).strip("-")
+    return slug or "journal"
 
 
 def _build_article_view(row):
@@ -58,6 +66,7 @@ def _build_article_view(row):
         "authors": authors,
         "pub_date": pub_date,
         "link": link or f"https://doi.org/{doi}",
+        "abstract": abstract,
         "summary": summary_text,
         "summary_kind": summary_kind,
     }
@@ -76,7 +85,17 @@ def build_report():
     grouped_dict = OrderedDict()
     for a in sorted(articles, key=lambda a: a["journal"] or ""):
         grouped_dict.setdefault(a["journal"] or "(誌名不明)", []).append(a)
-    grouped = list(grouped_dict.items())
+
+    grouped = []
+    seen_slugs = set()
+    for journal, items in grouped_dict.items():
+        slug = _slugify(journal)
+        base_slug, i = slug, 2
+        while slug in seen_slugs:
+            slug = f"{base_slug}-{i}"
+            i += 1
+        seen_slugs.add(slug)
+        grouped.append({"journal": journal, "slug": slug, "articles": items, "count": len(items)})
 
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_DIR)),

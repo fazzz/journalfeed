@@ -29,13 +29,37 @@
   header { margin-bottom: 2.5rem; }
   header h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
   header p { color: var(--muted); margin: 0; font-size: 0.9rem; }
-  .journal-section { margin-bottom: 2.4rem; }
+  .journal-section { margin-bottom: 2.4rem; scroll-margin-top: 6rem; }
   .journal-section h2 {
     font-size: 1.05rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.4rem;
     color: var(--accent);
   }
+  .toc {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+    background: var(--bg);
+    padding: 0.9rem 0 1rem;
+    margin-bottom: 1.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc-item {
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-decoration: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    white-space: nowrap;
+  }
+  .toc-item:hover { background: var(--summary-ok-bg); }
+  .toc-count { color: var(--muted); font-size: 0.76rem; margin-left: 0.15rem; }
   .article {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -51,6 +75,21 @@
   .summary.summary-ok { background: var(--summary-ok-bg); color: var(--summary-ok); }
   .summary.summary-pending { color: var(--summary-pending); font-style: italic; background: transparent; padding-left: 0; }
   .summary.summary-none { color: var(--summary-none); font-style: italic; background: transparent; padding-left: 0; }
+  .abstract-toggle { margin-top: 0.5rem; }
+  .abstract-toggle summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--accent);
+    user-select: none;
+  }
+  .abstract-toggle summary:hover { text-decoration: underline; }
+  .abstract-text {
+    font-size: 0.88rem;
+    color: var(--text);
+    margin: 0.5rem 0 0;
+    padding-left: 0.7rem;
+    border-left: 2px solid var(--border);
+  }
   footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 3rem; }
 </style>
 </head>
@@ -65,16 +104,30 @@
     <p>この期間に該当する記事はありません。</p>
   {% endif %}
 
-  {% for journal, items in grouped %}
-  <section class="journal-section">
-    <h2>{{ journal }} ({{ items|length }})</h2>
-    {% for a in items %}
+  {% if grouped %}
+  <nav class="toc">
+    {% for g in grouped %}
+    <a href="#journal-{{ g.slug }}" class="toc-item">{{ g.journal }}<span class="toc-count">({{ g.count }})</span></a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  {% for g in grouped %}
+  <section class="journal-section" id="journal-{{ g.slug }}">
+    <h2>{{ g.journal }} ({{ g.count }})</h2>
+    {% for a in g.articles %}
     <article class="article">
       <h3><a href="{{ a.link }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
       <div class="meta">
         {% if a.authors %}{{ a.authors }} ・ {% endif %}{{ a.pub_date or "日付不明" }}
       </div>
       <p class="summary summary-{{ a.summary_kind }}">{{ a.summary }}</p>
+      {% if a.abstract %}
+      <details class="abstract-toggle">
+        <summary>Abstractを表示</summary>
+        <p class="abstract-text">{{ a.abstract }}</p>
+      </details>
+      {% endif %}
     </article>
     {% endfor %}
   </section>
