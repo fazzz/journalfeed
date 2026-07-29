@@ -63,3 +63,13 @@ abstractのカバー率が高いOpenAlex APIで別途補完します。
    DB内でabstractが空の記事だけを対象に、DOI単体lookup(無料・無制限)で
    OpenAlexに問い合わせてabstractを埋めます。何度実行しても、既に埋まって
    いる記事は対象外なので安全です。
+
+## abstract取得ポリシー(C -> B)
+
+1. `enrich_abstracts.py` は毎回、abstractがまだ無い記事のうち
+   `abstract_status != 'unavailable'` のものだけを対象にOpenAlexへ再取得を試みる
+   (= 数日おきに再実行することで自然に「しばらく待って再取得」が実現される)。
+2. `fetched_at` から `ABSTRACT_GIVEUP_DAYS`(デフォルト7日)を過ぎても見つからない
+   記事は `abstract_status = 'unavailable'` にし、以降は問い合わせ対象から外れる。
+3. Step2のLLM要約では、`summarizable_articles()` で abstract のある記事だけを要約対象にし、
+   `title_only_articles()` で unavailable な記事をタイトルのみの一覧として別扱いする想定。
