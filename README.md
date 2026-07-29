@@ -46,3 +46,20 @@ python main.py
 - `from-index-date` はCrossrefへの「登録日」であり、実際の出版日(pub_date)とは
   ずれることがあります。LOOKBACK_DAYSのバッファはこのズレを吸収するためのものです。
 - 次のステップ(LLM要約、レポート生成、Mendeley連携、日次自動化)は別途追加していく想定です。
+
+## Step 1.5: abstractの補完 (OpenAlex)
+
+CrossrefはElsevier・ACSからabstractをほぼ受け取っていないため
+(実測でも本プロジェクトのCPC/JACSは0%、JCTCも10%程度)、
+abstractのカバー率が高いOpenAlex APIで別途補完します。
+
+1. https://openalex.org で無料アカウント登録
+2. https://openalex.org/settings/api でAPIキーを取得し、`config.py` の
+   `OPENALEX_API_KEY` に設定
+3. 実行:
+   ```bash
+   python enrich_abstracts.py
+   ```
+   DB内でabstractが空の記事だけを対象に、DOI単体lookup(無料・無制限)で
+   OpenAlexに問い合わせてabstractを埋めます。何度実行しても、既に埋まって
+   いる記事は対象外なので安全です。

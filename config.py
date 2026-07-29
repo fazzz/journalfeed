@@ -35,3 +35,10 @@ LOOKBACK_DAYS = 3
 
 # 1回のクエリで取得する最大件数(雑誌1誌・1回の実行あたり)
 ROWS_PER_QUERY = 100
+
+# --- abstract補完用 (OpenAlex) ---
+# 2026年2月よりAPIキーが必須。openalex.org で無料アカウント登録し、
+# https://openalex.org/settings/api でキーを取得して設定してください。
+# (DOI単体でのlookupは無料枠の対象外で、実質無制限に使えます)
+OPENALEX_API_KEY = "your_openalex_api_key"
+OPENALEX_REQUEST_INTERVAL = 0.2

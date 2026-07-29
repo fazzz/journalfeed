@@ -46,6 +46,19 @@ def insert_article(conn, journal, doi, title, authors, pub_date, link, abstract)
     return True
 
 
+def articles_missing_abstract(conn):
+    """abstractが空(NULLまたは空文字)の記事一覧を返す。"""
+    return conn.execute(
+        "SELECT doi, title FROM articles WHERE abstract IS NULL OR abstract = ''"
+    ).fetchall()
+
+
+def update_abstract(conn, doi, abstract):
+    """指定DOIの記事のabstractを更新する。"""
+    conn.execute("UPDATE articles SET abstract = ? WHERE doi = ?", (abstract, doi))
+    conn.commit()
+
+
 def unsummarized_articles(conn):
     """summary_ja がまだ入っていない記事一覧(Step2で使用)。"""
     return conn.execute(
