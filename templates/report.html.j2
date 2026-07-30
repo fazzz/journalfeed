@@ -25,7 +25,7 @@
     font-family: "Hiragino Sans", "Yu Gothic", "Segoe UI", sans-serif;
     line-height: 1.7;
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
   header { margin-bottom: 2.5rem; }
   header h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
   header p { color: var(--muted); margin: 0; font-size: 0.9rem; }
@@ -35,6 +35,15 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.4rem;
     color: var(--accent);
+  }
+  .article-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .article-grid { grid-template-columns: 1fr; }
   }
   .toc {
     position: sticky;
@@ -68,7 +77,6 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 1rem 1.2rem;
-    margin-bottom: 0.9rem;
   }
   .article h3 { margin: 0 0 0.3rem; font-size: 1.02rem; line-height: 1.4; }
   .article h3 a { color: var(--text); text-decoration: none; }
@@ -159,6 +167,31 @@
   .article.kw-0 .summary { font-size: 0.85rem; }
   .article.kw-0 .abstract-toggle summary { font-size: 0.74rem; }
   .article.kw-0 .abstract-text { font-size: 0.8rem; }
+
+  .article.collapsed { padding: 0.65rem 1rem; }
+  .article-collapsed-summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .article-collapsed-summary::-webkit-details-marker { display: none; }
+  .article-collapsed-summary input[type="checkbox"] {
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+    width: 0.95rem;
+    height: 0.95rem;
+    accent-color: var(--accent);
+  }
+  .article-collapsed-summary .collapsed-title {
+    font-size: 0.86rem;
+    color: var(--text);
+    text-decoration: none;
+    line-height: 1.5;
+  }
+  .article-collapsed-summary .collapsed-title:hover { text-decoration: underline; }
+  .article-collapsed-body { margin-top: 0.6rem; }
   footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 3rem; }
 </style>
 </head>
@@ -184,8 +217,29 @@
   {% for g in grouped %}
   <section class="journal-section{% if g.is_hot %} hot{% endif %}" id="journal-{{ g.slug }}">
     <h2>{{ g.journal }} ({{ g.count }}){% if g.is_hot %}<span class="journal-hot-badge">🔥 ヒット多数({{ g.hit_articles }}/{{ g.count }})</span>{% endif %}</h2>
+    <div class="article-grid">
     {% for a in g.articles %}
-    <article class="article kw-{{ a.hit_tier }}">
+    <article class="article kw-{{ a.hit_tier }}{% if a.hit_tier == 0 %} collapsed{% endif %}">
+      {% if a.hit_tier == 0 %}
+      <details>
+        <summary class="article-collapsed-summary">
+          <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}" onclick="event.stopPropagation()">
+          <a class="collapsed-title" href="{{ a.link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()">{{ a.title }}</a>
+        </summary>
+        <div class="article-collapsed-body">
+          <div class="meta">
+            {% if a.authors %}{{ a.authors }} ・ {% endif %}{{ a.pub_date or "日付不明" }}
+          </div>
+          <p class="summary summary-{{ a.summary_kind }}">{{ a.summary }}</p>
+          {% if a.abstract %}
+          <details class="abstract-toggle">
+            <summary>Abstractを表示</summary>
+            <p class="abstract-text">{{ a.abstract }}</p>
+          </details>
+          {% endif %}
+        </div>
+      </details>
+      {% else %}
       <div class="select-row">
         <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}">
         <h3><a href="{{ a.link }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
@@ -203,8 +257,10 @@
         <p class="abstract-text">{{ a.abstract }}</p>
       </details>
       {% endif %}
+      {% endif %}
     </article>
     {% endfor %}
+    </div>
   </section>
   {% endfor %}
 
