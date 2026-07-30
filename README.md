@@ -300,3 +300,26 @@ Step2(LLM要約)は課金が発生するため、あえて自動化から外し�
    Branch を **main** / **/docs** に設定して Save
 4. 数分待つと、`https://<あなたのアカウント>.github.io/<リポジトリ名>/` で
    レポートが見られるようになる(以降は毎日のActions実行のたびに自動更新)
+
+## articles.dbの肥大化対策(アーカイブ)
+
+articles.dbは毎日新着記事が増え続けるため、放置すると将来的に肥大化します
+(GitHubは単体ファイル100MBで強制ブロック、リポジトリ全体でも1GB程度が推奨上限)。
+
+そこで `ARCHIVE_KEEP_DAYS`(既定180日)より古い記事は、`archives/` フォルダの
+中に「その時点までの記事」としてアーカイブファイル(`archive_until_YYYY-MM-DD.db`)
+を作って移し、articles.db本体からは削除・VACUUMして実サイズも縮めます。
+アーカイブファイルは一度作ったら二度と書き換えないので、gitの差分もそこで
+止まり、リポジトリが際限なく肥大化するのを防げます。
+
+```bash
+python archive_old_articles.py
+```
+
+`.github/workflows/archive.yml` として、毎月1日に自動実行するワークフローも
+用意しました(手動実行 workflow_dispatch にも対応)。日次クロールとは別の
+ワークフローなので、頻繁に走って小さなアーカイブファイルが乱立することは
+ありません。
+
+過去の記事を調べたくなったら、該当する `archives/archive_until_*.db` を
+`sqlite3` などで直接開けば、当時のタイトル・abstract・要約がすべて残っています。

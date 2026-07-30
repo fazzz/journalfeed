@@ -123,6 +123,11 @@ REPORT_LOOKBACK_DAYS = 7  # 直近何日分(fetched_at基準)をレポートに�
 # report.py実行のたびに、最新のレポートをこのパスにも書き出す。
 DOCS_OUTPUT_PATH = "docs/index.html"
 
+# --- 古いデータのアーカイブ用 ---
+# articles.db に残す期間(日)。これより古い fetched_at の記事はアーカイブに移す。
+ARCHIVE_KEEP_DAYS = 180
+ARCHIVE_DIR = "archives"
+
 # --- Mendeley連携用 ---
 # https://dev.mendeley.com で無料でアプリ登録し、CLIENT_ID/CLIENT_SECRETを取得。
 # アプリ登録時の「Redirect URL」は、下の MENDELEY_REDIRECT_URI と

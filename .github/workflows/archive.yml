@@ -1,0 +1,36 @@
+name: journalfeed monthly archive
+
+on:
+  schedule:
+    # 毎月1日 UTC 21:00 (日本時間 2日 朝6:00)
+    - cron: "0 21 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Archive old articles
+        run: python archive_old_articles.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "journalfeed-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add articles.db archives/
+          git diff --cached --quiet || git commit -m "archive old articles: $(date -u +'%Y-%m-%d')"
+          git push
