@@ -323,3 +323,47 @@ python archive_old_articles.py
 
 過去の記事を調べたくなったら、該当する `archives/archive_until_*.db` を
 `sqlite3` などで直接開けば、当時のタイトル・abstract・要約がすべて残っています。
+
+## プリプリントサーバー対応 (bioRxiv / ChemRxiv / arXiv)
+
+ジャーナルに加えて、プリプリントサーバーの新着もチェックできます。
+
+- **bioRxiv・ChemRxiv**: Crossrefに登録されているため、`config.py` の
+  `PREPRINT_SOURCES` にDOIプレフィックス(bioRxiv=`10.1101`,
+  ChemRxiv=`10.26434`)を指定するだけで、ジャーナルと同じCrossref経由の
+  仕組みで取得できる。bioRxivはmedRxivとプレフィックスを共用しているため、
+  `institution_filter` で「bioRxivだけ」に絞り込んでいる。
+- **arXiv**: Crossrefに登録されていないため、arXiv専用API
+  (`arxiv_client.py`)で別途取得する。`config.py` の `ARXIV_CATEGORIES` で
+  カテゴリ(例: `physics.chem-ph`, `cond-mat.soft`, `q-bio.BM`)を指定する。
+
+### ジャーナルとプリプリントで扱いを変えている点
+
+ジャーナル(`JOURNALS`)は誌名自体である程度絞り込まれているため、これまで
+通り全件保存する。一方、プリプリント(`PREPRINT_SOURCES` と
+`ARXIV_CATEGORIES`)は誌名による絞り込みが効かず、特にarXivは分野が広く
+投稿数も多いため、`config.py` の `KEYWORDS` に
+`MIN_KEYWORD_HITS_FOR_PREPRINTS`(既定2件)以上ヒットしたものだけを
+DBに保存するようにしている。これによりノイズと肥大化の両方を抑えている。
+
+しきい値は用途に応じて調整してください(緩くしたいなら1に、厳しくしたいなら
+3以上に)。
+
+### Mendeley登録時の識別子
+
+arXivの論文はDOIを持たないことが多いため、`arxiv:<ID>` という擬似DOIを
+内部的なキーとして使っている。Mendeleyへの登録時には、これを自動判定して
+`identifiers.arxiv` として送るようにしている(通常のDOIを持つ記事は
+従来通り `identifiers.doi`)。
+
+## enrich_abstracts.pyについて(処理時間と安全な中断)
+
+対象記事が多いと、1件ずつ順番にOpenAlexへ問い合わせる都合上、それなりに
+時間がかかることがあります。進捗は `[現在の件数/全体件数]` の形で表示される
+ので、進んでいるかどうかは確認できます。
+
+- **途中でCtrl+Cで止めても安全です**。1件処理するごとにDBへ保存(commit)
+  しているので、途中で止めても壊れたり重複したりしません。次に実行すれば
+  続きから処理されます。
+- 動作確認だけしたい場合は `python enrich_abstracts.py --limit 50` のように
+  件数を絞れます。

@@ -45,6 +45,11 @@ def _parse_work(msg):
     doi = msg.get("DOI")
     link = msg.get("URL") or (f"https://doi.org/{doi}" if doi else None)
 
+    institution = None
+    inst_list = msg.get("institution")
+    if inst_list:
+        institution = inst_list[0].get("name")
+
     return {
         "doi": doi,
         "title": title,
@@ -52,7 +57,26 @@ def _parse_work(msg):
         "abstract": abstract,
         "pub_date": pub_date,
         "link": link,
+        "institution": institution,
     }
+
+
+def _fetch(filter_expr, from_date, rows=100):
+    """filter_expr(例: "issn:0002-7863" や "prefix:10.1101")で絞り込み、
+    from_date以降にCrossrefへ初めて登録された論文一覧を新しい順に取得する。
+    """
+    params = {
+        "filter": f"{filter_expr},from-created-date:{from_date}",
+        "sort": "created",
+        "order": "desc",
+        "rows": rows,
+        "mailto": CROSSREF_MAILTO,
+    }
+    headers = {"User-Agent": f"journalfeed/0.1 (mailto:{CROSSREF_MAILTO})"}
+    resp = requests.get(BASE_URL, params=params, headers=headers, timeout=20)
+    resp.raise_for_status()
+    items = resp.json().get("message", {}).get("items", [])
+    return [_parse_work(item) for item in items]
 
 
 def fetch_new_works(issn, from_date, rows=100):
@@ -68,18 +92,24 @@ def fetch_new_works(issn, from_date, rows=100):
     from_date: "YYYY-MM-DD" 形式の文字列
     戻り値: _parse_work() の辞書のリスト(created日時が新しい順)
     """
-    params = {
-        "filter": f"issn:{issn},from-created-date:{from_date}",
-        "sort": "created",
-        "order": "desc",
-        "rows": rows,
-        "mailto": CROSSREF_MAILTO,
-    }
-    headers = {"User-Agent": f"journalfeed/0.1 (mailto:{CROSSREF_MAILTO})"}
-    resp = requests.get(BASE_URL, params=params, headers=headers, timeout=20)
-    resp.raise_for_status()
-    items = resp.json().get("message", {}).get("items", [])
-    return [_parse_work(item) for item in items]
+    return _fetch(f"issn:{issn}", from_date, rows)
+
+
+def fetch_new_works_by_prefix(prefix, from_date, rows=100, institution_filter=None):
+    """DOIプレフィックス指定(例: bioRxiv=10.1101, ChemRxiv=10.26434)で
+    新着論文を取得する。プリプリントサーバー向け。
+
+    institution_filter を指定すると、Crossrefのinstitutionフィールド名で
+    さらに絞り込む(例: "10.1101" はbioRxivとmedRxivが共用しているため、
+    institution_filter="bioRxiv" でbioRxiv分だけに絞れる)。
+    """
+    works = _fetch(f"prefix:{prefix}", from_date, rows)
+    if institution_filter:
+        works = [
+            w for w in works
+            if (w.get("institution") or "").strip().lower() == institution_filter.strip().lower()
+        ]
+    return works
 
 
 def default_from_date(lookback_days):

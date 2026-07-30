@@ -28,6 +28,7 @@ from config import (
     JOURNAL_HOT_MIN_HITS,
 )
 from db import get_conn, recent_articles_for_report
+from keyword_utils import matched_keywords
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = BASE_DIR / "templates"
@@ -38,12 +39,6 @@ def _slugify(text):
     slug = re.sub(r"[^a-zA-Z0-9\-]+", "-", (text or "").strip().lower())
     slug = re.sub(r"-{2,}", "-", slug).strip("-")
     return slug or "journal"
-
-
-def _matched_keywords(title, abstract, keywords):
-    """タイトル・アブストラクトに含まれるキーワードのリストを返す(大小文字を区別しない)。"""
-    haystack = f"{title or ''} {abstract or ''}".lower()
-    return [kw for kw in keywords if kw.lower() in haystack]
 
 
 def _hit_tier(hit_count):
@@ -83,7 +78,7 @@ def _build_article_view(row):
         summary_text = "abstract取得待ちです。"
         summary_kind = "pending"
 
-    matched = _matched_keywords(title, abstract, KEYWORDS)
+    matched = matched_keywords(title, abstract, KEYWORDS)
     hit_count = len(matched)
 
     return {

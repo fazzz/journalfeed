@@ -136,7 +136,10 @@ def add_document(access_token, title, journal=None, authors_str=None, year=None,
     if abstract:
         body["abstract"] = abstract
     if doi:
-        body["identifiers"] = {"doi": doi}
+        if doi.startswith("arxiv:"):
+            body["identifiers"] = {"arxiv": doi.split(":", 1)[1]}
+        else:
+            body["identifiers"] = {"doi": doi}
 
     resp = requests.post(
         DOCUMENTS_URL,

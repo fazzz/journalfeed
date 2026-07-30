@@ -18,6 +18,7 @@ abstractを補完する。
 """
 
 from datetime import datetime, timedelta, timezone
+import argparse
 import time
 
 from config import DB_PATH, OPENALEX_API_KEY, OPENALEX_REQUEST_INTERVAL, ABSTRACT_GIVEUP_DAYS
@@ -34,19 +35,22 @@ def _is_past_giveup(fetched_at_str, giveup_days):
     return now_naive_utc - fetched_at > timedelta(days=giveup_days)
 
 
-def run():
+def run(limit=None):
     conn = get_conn(DB_PATH)
     targets = articles_pending_abstract(conn)
-    print(f"abstract再取得の対象: {len(targets)} 件 (猶予 {ABSTRACT_GIVEUP_DAYS} 日)")
+    if limit:
+        targets = targets[:limit]
+    total = len(targets)
+    print(f"abstract再取得の対象: {total} 件 (猶予 {ABSTRACT_GIVEUP_DAYS} 日)")
 
     filled = 0
     gave_up = 0
 
-    for doi, title, fetched_at in targets:
+    for i, (doi, title, fetched_at) in enumerate(targets, start=1):
         try:
             abstract = get_abstract_by_doi(doi, OPENALEX_API_KEY)
         except Exception as e:
-            print(f"  取得失敗 ({doi}): {e}")
+            print(f"  [{i}/{total}] 取得失敗 ({doi}): {e}")
             time.sleep(OPENALEX_REQUEST_INTERVAL)
             continue
 
@@ -55,17 +59,28 @@ def run():
         if abstract:
             mark_abstract_found(conn, doi, abstract)
             filled += 1
-            print(f"  + 補完: {label}")
+            print(f"  [{i}/{total}] + 補完: {label}")
         elif _is_past_giveup(fetched_at, ABSTRACT_GIVEUP_DAYS):
             mark_abstract_unavailable(conn, doi)
             gave_up += 1
-            print(f"  - 断念(タイトルのみ扱いへ): {label}")
+            print(f"  [{i}/{total}] - 断念(タイトルのみ扱いへ): {label}")
+        elif i % 20 == 0:
+            # 見つからず・断念でもない(まだ猶予期間内)行が続く場合の進捗確認用
+            print(f"  [{i}/{total}] ...処理中(見つからず、猶予期間内のためスキップ)")
 
         time.sleep(OPENALEX_REQUEST_INTERVAL)
 
-    print(f"\n{filled}/{len(targets)} 件を補完、{gave_up} 件を断念(unavailable)にしました。")
+    print(f"\n{filled}/{total} 件を補完、{gave_up} 件を断念(unavailable)にしました。")
     conn.close()
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser(description="Step1.5: abstractの補完")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="動作確認用に処理件数を絞る(例: --limit 50)。省略時は全件処理。",
+    )
+    args = parser.parse_args()
+    run(limit=args.limit)

@@ -90,6 +90,33 @@ LOOKBACK_DAYS = 3
 # 1回のクエリで取得する最大件数(雑誌1誌・1回の実行あたり)
 ROWS_PER_QUERY = 100
 
+# --- プリプリントサーバー (Crossref / DOIプレフィックス指定) ---
+# bioRxiv・ChemRxivはCrossrefに登録されているため、ISSNの代わりに
+# DOIプレフィックスで同じ仕組みが使える。
+# bioRxivはmedRxivとプレフィックス(10.1101)を共用しているため、
+# institution_filter で絞り込む。
+PREPRINT_SOURCES = [
+    {"journal": "bioRxiv", "prefix": "10.1101", "institution_filter": "bioRxiv"},
+    {"journal": "ChemRxiv", "prefix": "10.26434", "institution_filter": None},
+]
+
+# --- arXiv (専用API) ---
+# 自分の研究テーマに合わせてカテゴリを編集してください。
+# 参考: physics.chem-ph(化学物理)、cond-mat.soft(ソフトマター)、
+#      cond-mat.stat-mech(統計力学)、q-bio.BM(生体高分子)
+ARXIV_CATEGORIES = [
+    "physics.chem-ph",
+    "cond-mat.soft",
+    "q-bio.BM",
+]
+ARXIV_MAX_RESULTS = 100
+
+# プリプリント(PREPRINT_SOURCES・ARXIV_CATEGORIES)は、ジャーナルと違って
+# 誌名自体による絞り込みが効かず、そのまま全件保存すると量が多くなりすぎる。
+# そのため、KEYWORDS(下で定義)に何件以上ヒットしたものだけをDBに保存するかを
+# ここで指定する。ジャーナル(JOURNALS)側には適用されない。
+MIN_KEYWORD_HITS_FOR_PREPRINTS = 2
+
 # --- abstract補完用 (OpenAlex) ---
 # 2026年2月よりAPIキーが必須。openalex.org で無料アカウント登録し、
 # https://openalex.org/settings/api でキーを取得して設定してください。

@@ -1,3 +1,4 @@
 requests
 anthropic
 jinja2
+feedparser
