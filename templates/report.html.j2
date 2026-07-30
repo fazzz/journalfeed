@@ -76,11 +76,8 @@
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 1rem 1.2rem;
+    padding: 0.7rem 1.1rem;
   }
-  .article h3 { margin: 0 0 0.3rem; font-size: 1.02rem; line-height: 1.4; }
-  .article h3 a { color: var(--text); text-decoration: none; }
-  .article h3 a:hover { text-decoration: underline; }
   .meta { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.6rem; }
   .summary { font-size: 0.92rem; margin: 0; padding: 0.55rem 0.7rem; border-radius: 6px; }
   .summary.summary-ok { background: var(--summary-ok-bg); color: var(--summary-ok); }
@@ -100,14 +97,6 @@
     margin: 0.5rem 0 0;
     padding-left: 0.7rem;
     border-left: 2px solid var(--border);
-  }
-  .select-row { display: flex; align-items: flex-start; gap: 0.55rem; }
-  .select-row input[type="checkbox"] {
-    margin-top: 0.4rem;
-    flex-shrink: 0;
-    width: 1.05rem;
-    height: 1.05rem;
-    accent-color: var(--accent);
   }
   .export-btn {
     position: fixed;
@@ -151,24 +140,24 @@
   .article.kw-1 { border-left: 4px solid #d9b95c; }
   .article.kw-2 { border-left: 4px solid #d98a3a; background: #fffaf3; }
   .article.kw-3 { border-left: 4px solid #c1442b; background: #fff4f0; }
-  .kw-badge {
+  .kw-badge-inline {
     display: inline-block;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: #8a5a20;
     background: #fbe9c8;
     border-radius: 4px;
-    padding: 0.1rem 0.45rem;
-    margin: 0.4rem 0 0;
+    padding: 0.05rem 0.4rem;
+    margin-left: 0.4rem;
+    white-space: normal;
   }
-  .article.kw-3 .kw-badge { color: #8f2c1a; background: #fddcd2; }
+  .article.kw-3 .kw-badge-inline { color: #8f2c1a; background: #fddcd2; }
 
-  .article.kw-0 h3 { font-size: 0.9rem; }
+  .article.kw-0 .collapsed-title { font-size: 0.86rem; color: var(--muted); }
   .article.kw-0 .meta { font-size: 0.76rem; }
   .article.kw-0 .summary { font-size: 0.85rem; }
   .article.kw-0 .abstract-toggle summary { font-size: 0.74rem; }
   .article.kw-0 .abstract-text { font-size: 0.8rem; }
 
-  .article.collapsed { padding: 0.65rem 1rem; }
   .article-collapsed-summary {
     list-style: none;
     cursor: pointer;
@@ -178,20 +167,21 @@
   }
   .article-collapsed-summary::-webkit-details-marker { display: none; }
   .article-collapsed-summary input[type="checkbox"] {
-    margin-top: 0.25rem;
+    margin-top: 0.3rem;
     flex-shrink: 0;
-    width: 0.95rem;
-    height: 0.95rem;
+    width: 1rem;
+    height: 1rem;
     accent-color: var(--accent);
   }
-  .article-collapsed-summary .collapsed-title {
-    font-size: 0.86rem;
+  .collapsed-title-wrap { line-height: 1.5; }
+  .collapsed-title {
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text);
     text-decoration: none;
-    line-height: 1.5;
   }
-  .article-collapsed-summary .collapsed-title:hover { text-decoration: underline; }
-  .article-collapsed-body { margin-top: 0.6rem; }
+  .collapsed-title:hover { text-decoration: underline; }
+  .article-collapsed-body { margin-top: 0.65rem; padding-top: 0.1rem; }
   footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 3rem; }
 </style>
 </head>
@@ -209,22 +199,24 @@
   {% if grouped %}
   <nav class="toc">
     {% for g in grouped %}
-    <a href="#journal-{{ g.slug }}" class="toc-item{% if g.is_hot %} hot{% endif %}">{{ g.journal }}<span class="toc-count">({{ g.count }})</span>{% if g.is_hot %}<span class="toc-fire">🔥</span>{% endif %}</a>
+    <a href="#journal-{{ g.slug }}" class="toc-item{% if g.is_hot %} hot{% endif %}" title="{{ g.journal }}">{{ g.display_name }}<span class="toc-count">({{ g.count }})</span>{% if g.is_hot %}<span class="toc-fire">🔥</span>{% endif %}</a>
     {% endfor %}
   </nav>
   {% endif %}
 
   {% for g in grouped %}
   <section class="journal-section{% if g.is_hot %} hot{% endif %}" id="journal-{{ g.slug }}">
-    <h2>{{ g.journal }} ({{ g.count }}){% if g.is_hot %}<span class="journal-hot-badge">🔥 ヒット多数({{ g.hit_articles }}/{{ g.count }})</span>{% endif %}</h2>
+    <h2 title="{{ g.journal }}">{{ g.display_name }} ({{ g.count }}){% if g.is_hot %}<span class="journal-hot-badge">🔥 ヒット多数({{ g.hit_articles }}/{{ g.count }})</span>{% endif %}</h2>
     <div class="article-grid">
     {% for a in g.articles %}
-    <article class="article kw-{{ a.hit_tier }}{% if a.hit_tier == 0 %} collapsed{% endif %}">
-      {% if a.hit_tier == 0 %}
+    <article class="article kw-{{ a.hit_tier }}">
       <details>
         <summary class="article-collapsed-summary">
           <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}" onclick="event.stopPropagation()">
-          <a class="collapsed-title" href="{{ a.link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()">{{ a.title }}</a>
+          <span class="collapsed-title-wrap">
+            <a class="collapsed-title" href="{{ a.link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()">{{ a.title }}</a>
+            {% if a.keyword_hits %}<span class="kw-badge-inline">🔑 {{ a.keyword_hits|join(", ") }}</span>{% endif %}
+          </span>
         </summary>
         <div class="article-collapsed-body">
           <div class="meta">
@@ -239,25 +231,6 @@
           {% endif %}
         </div>
       </details>
-      {% else %}
-      <div class="select-row">
-        <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}">
-        <h3><a href="{{ a.link }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
-      </div>
-      <div class="meta">
-        {% if a.authors %}{{ a.authors }} ・ {% endif %}{{ a.pub_date or "日付不明" }}
-      </div>
-      {% if a.keyword_hits %}
-      <div class="kw-badge">🔑 一致キーワード: {{ a.keyword_hits|join(", ") }}</div>
-      {% endif %}
-      <p class="summary summary-{{ a.summary_kind }}">{{ a.summary }}</p>
-      {% if a.abstract %}
-      <details class="abstract-toggle">
-        <summary>Abstractを表示</summary>
-        <p class="abstract-text">{{ a.abstract }}</p>
-      </details>
-      {% endif %}
-      {% endif %}
     </article>
     {% endfor %}
     </div>

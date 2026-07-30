@@ -29,6 +29,7 @@ from config import (
 )
 from db import get_conn, recent_articles_for_report
 from keyword_utils import matched_keywords
+from journal_abbrev import load_abbreviations
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = BASE_DIR / "templates"
@@ -111,6 +112,8 @@ def build_report():
     for a in sorted(articles, key=lambda a: a["journal"] or ""):
         grouped_dict.setdefault(a["journal"] or "(誌名不明)", []).append(a)
 
+    abbreviations = load_abbreviations()
+
     grouped = []
     seen_slugs = set()
     for journal, items in grouped_dict.items():
@@ -128,9 +131,12 @@ def build_report():
             hit_ratio >= JOURNAL_HOT_MIN_HIT_RATIO or total_hits >= JOURNAL_HOT_MIN_HITS
         )
 
+        display_name = abbreviations.get(journal, journal)
+
         grouped.append(
             {
                 "journal": journal,
+                "display_name": display_name,
                 "slug": slug,
                 "articles": items,
                 "count": len(items),

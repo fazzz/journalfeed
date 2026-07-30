@@ -70,6 +70,13 @@ JOURNALS = [
     {"journal": "Systematic Biology", "issn": "1076-836X"},
     {"journal": "Journal of the ACM", "issn": "1557-735X"},
     {"journal": "Macromolecules", "issn": "1520-5835"},
+    {"journal": "ACS Omega", "issn": "2470-1343"},
+    {"journal": "Scientific Reports", "issn": "2045-2322"},
+    {"journal": "Biophysical Journal", "issn": "0006-3495"},
+    {"journal": "Protein Science", "issn": "0961-8368"},
+    {"journal": "Journal of Biomolecular Structure and Dynamics", "issn": "0739-1102"},
+    {"journal": "Frontiers in Molecular Biosciences", "issn": "2296-889X"},
+    {"journal": "Living Journal of Computational Molecular Science", "issn": "2575-6524"},
 ]
 
 DB_PATH = "articles.db"
@@ -149,6 +156,10 @@ REPORT_LOOKBACK_DAYS = 7  # 直近何日分(fetched_at基準)をレポートに�
 # GitHub Pagesで公開する場合の出力先(Pagesの公開元を "main" / "docs" に設定する想定)。
 # report.py実行のたびに、最新のレポートをこのパスにも書き出す。
 DOCS_OUTPUT_PATH = "docs/index.html"
+
+# ジャーナル略称(abbreviation)のキャッシュファイル。
+# fetch_journal_abbreviations.py が書き込み、report.py が読み込んで表示に使う。
+JOURNAL_ABBREV_FILE = "journal_abbreviations.json"
 
 # --- 古いデータのアーカイブ用 ---
 # articles.db に残す期間(日)。これより古い fetched_at の記事はアーカイブに移す。

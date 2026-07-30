@@ -112,6 +112,27 @@ def fetch_new_works_by_prefix(prefix, from_date, rows=100, institution_filter=No
     return works
 
 
+def fetch_short_title(issn):
+    """指定ISSNの雑誌について、Crossref上の一般的な略称(short-container-title)を
+    取得する。見つからない場合はNoneを返す。
+    """
+    params = {
+        "filter": f"issn:{issn}",
+        "rows": 1,
+        "mailto": CROSSREF_MAILTO,
+    }
+    headers = {"User-Agent": f"journalfeed/0.1 (mailto:{CROSSREF_MAILTO})"}
+    resp = requests.get(BASE_URL, params=params, headers=headers, timeout=20)
+    resp.raise_for_status()
+    items = resp.json().get("message", {}).get("items", [])
+    if not items:
+        return None
+    short_titles = items[0].get("short-container-title")
+    if short_titles:
+        return short_titles[0]
+    return None
+
+
 def default_from_date(lookback_days):
     """本日から lookback_days 日前の日付を YYYY-MM-DD で返す。"""
     d = date.today() - timedelta(days=lookback_days)

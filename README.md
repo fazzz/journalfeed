@@ -367,3 +367,27 @@ arXivの論文はDOIを持たないことが多いため、`arxiv:<ID>` とい�
   続きから処理されます。
 - 動作確認だけしたい場合は `python enrich_abstracts.py --limit 50` のように
   件数を絞れます。
+
+## ジャーナル名の略称表示
+
+レポート上のジャーナル名を、正式名称ではなく一般的な略称(例:
+"Journal of the American Chemical Society" → "J. Am. Chem. Soc.")で
+表示できます。Crossref上の論文データに含まれる `short-container-title`
+(出版社が登録している場合)を利用して自動取得します。
+
+```bash
+python fetch_journal_abbreviations.py
+```
+
+- `JOURNALS` に登録した各誌について、Crossrefから略称を取得し
+  `journal_abbreviations.json` に保存します。
+- 既に分かっている誌はスキップされるので、新しいジャーナルを追加したときや
+  未取得の誌を再確認したいときに、何度実行しても安全です。
+- 出版社がshort-container-titleを登録していない誌は略称が見つからず、
+  その場合はレポート上も正式名称のまま表示されます(マウスホバーすると
+  正式名称がツールチップで見られるので、略称が付いた誌でも元の誌名を
+  確認できます)。
+
+このスクリプトは頻繁に実行する必要はないので、GitHub Actionsには組み込んで
+いません。手元で1回実行し、`journal_abbreviations.json` をコミットしておく
+運用を想定しています。
