@@ -26,9 +26,11 @@ from config import (
     KEYWORDS,
     JOURNAL_HOT_MIN_HIT_RATIO,
     JOURNAL_HOT_MIN_HITS,
+    AUTHOR_WATCHLIST,
 )
 from db import get_conn, recent_articles_for_report
 from keyword_utils import matched_keywords
+from author_utils import matched_authors
 from journal_abbrev import load_abbreviations
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -82,6 +84,15 @@ def _build_article_view(row):
     matched = matched_keywords(title, abstract, KEYWORDS)
     hit_count = len(matched)
 
+    author_matches = matched_authors(authors, AUTHOR_WATCHLIST)
+    author_hit_count = len(author_matches)
+
+    # 表示用のtier: キーワードによる色分けはそのままに、著者ウォッチにヒットした
+    # 記事は(キーワードが0件でも)最低でもtier1相当の見た目になるよう底上げする。
+    display_tier = _hit_tier(hit_count)
+    if author_hit_count > 0:
+        display_tier = max(display_tier, 1)
+
     return {
         "doi": doi,
         "journal": journal,
@@ -95,6 +106,9 @@ def _build_article_view(row):
         "keyword_hits": matched,
         "hit_count": hit_count,
         "hit_tier": _hit_tier(hit_count),
+        "author_hits": author_matches,
+        "author_hit_count": author_hit_count,
+        "display_tier": display_tier,
     }
 
 

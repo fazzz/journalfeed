@@ -391,3 +391,43 @@ python fetch_journal_abbreviations.py
 このスクリプトは頻繁に実行する必要はないので、GitHub Actionsには組み込んで
 いません。手元で1回実行し、`journal_abbreviations.json` をコミットしておく
 運用を想定しています。
+
+## FILTERED_JOURNALS(キーワードフィルタ付きの通常ジャーナル)
+
+Frontiers in Molecular Biosciencesのように、ISSNを持つ通常のジャーナルだが
+掲載点数が多く分野も広いため、プリプリントと同様にキーワードフィルタを
+掛けたい場合は `config.py` の `FILTERED_JOURNALS` に追加してください。
+取得方法自体は `JOURNALS` と同じ(Crossref / ISSN指定)ですが、
+`MIN_KEYWORD_HITS_FOR_PREPRINTS` 件以上ヒットしたものだけが保存されます。
+
+```python
+FILTERED_JOURNALS = [
+    {"journal": "Frontiers in Molecular Biosciences", "issn": "2296-889X"},
+]
+```
+
+## Mendeleyのclient_idについて
+
+`MENDELEY_CLIENT_ID` はOAuthのclient_id(公開アプリにも埋め込まれる類のもので、
+一般的に秘密情報としては扱われない)なので、`config.py` に直書きしています。
+秘密にすべき `MENDELEY_CLIENT_SECRET` だけ環境変数から読む構成にしています。
+
+## 著者ウォッチリスト
+
+`config.py` の `AUTHOR_WATCHLIST` にフルネームを追加すると、その著者の記事は
+自動的に目立つように表示されます。
+
+```python
+AUTHOR_WATCHLIST = ["Michael Shirts", "David Mobley"]
+```
+
+- **レポート表示**: 著者ウォッチにヒットした記事は、キーワードのヒット数に
+  関わらず(0件でも)最低限のハイライト(枠線・通常サイズの文字)が付き、
+  タイトル横に ⭐ バッジで一致した著者名が表示される。
+- **プリプリントのフィルタ**: `FILTERED_JOURNALS` や `PREPRINT_SOURCES`、
+  `ARXIV_CATEGORIES` では通常キーワードのヒット数でフィルタしているが、
+  著者ウォッチにヒットした記事はキーワードのヒットが無くても保存される
+  (見逃し防止)。
+- 判定は大小文字を区別しない部分一致。著者欄の表記ゆれ(ミドルネームの
+  有無など)で一致しないことがあるので、うまく拾えない場合はウォッチ
+  リストの書き方を調整してください。

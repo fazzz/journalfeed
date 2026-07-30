@@ -152,6 +152,18 @@
   }
   .article.kw-3 .kw-badge-inline { color: #8f2c1a; background: #fddcd2; }
 
+  .author-badge-inline {
+    display: inline-block;
+    font-size: 0.68rem;
+    color: #7a5c00;
+    background: #fdf1c8;
+    border: 1px solid #e8cf7a;
+    border-radius: 4px;
+    padding: 0.05rem 0.4rem;
+    margin-left: 0.4rem;
+    white-space: normal;
+  }
+
   .article.kw-0 .collapsed-title { font-size: 0.86rem; color: var(--muted); }
   .article.kw-0 .meta { font-size: 0.76rem; }
   .article.kw-0 .summary { font-size: 0.85rem; }
@@ -209,12 +221,13 @@
     <h2 title="{{ g.journal }}">{{ g.display_name }} ({{ g.count }}){% if g.is_hot %}<span class="journal-hot-badge">🔥 ヒット多数({{ g.hit_articles }}/{{ g.count }})</span>{% endif %}</h2>
     <div class="article-grid">
     {% for a in g.articles %}
-    <article class="article kw-{{ a.hit_tier }}">
+    <article class="article kw-{{ a.display_tier }}">
       <details>
         <summary class="article-collapsed-summary">
           <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}" onclick="event.stopPropagation()">
           <span class="collapsed-title-wrap">
             <a class="collapsed-title" href="{{ a.link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()">{{ a.title }}</a>
+            {% if a.author_hits %}<span class="author-badge-inline">⭐ {{ a.author_hits|join(", ") }}</span>{% endif %}
             {% if a.keyword_hits %}<span class="kw-badge-inline">🔑 {{ a.keyword_hits|join(", ") }}</span>{% endif %}
           </span>
         </summary>

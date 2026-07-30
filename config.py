@@ -75,7 +75,6 @@ JOURNALS = [
     {"journal": "Biophysical Journal", "issn": "0006-3495"},
     {"journal": "Protein Science", "issn": "0961-8368"},
     {"journal": "Journal of Biomolecular Structure and Dynamics", "issn": "0739-1102"},
-    {"journal": "Frontiers in Molecular Biosciences", "issn": "2296-889X"},
     {"journal": "Living Journal of Computational Molecular Science", "issn": "2575-6524"},
 ]
 
@@ -123,6 +122,13 @@ ARXIV_MAX_RESULTS = 100
 # そのため、KEYWORDS(下で定義)に何件以上ヒットしたものだけをDBに保存するかを
 # ここで指定する。ジャーナル(JOURNALS)側には適用されない。
 MIN_KEYWORD_HITS_FOR_PREPRINTS = 2
+
+# ISSNを持つ通常のジャーナルだが、掲載点数が多い・分野が広いなどの理由で
+# プリプリントと同様にキーワードフィルタ(MIN_KEYWORD_HITS_FOR_PREPRINTS)を
+# 適用したいジャーナル。取得方法自体はJOURNALSと同じくISSN指定のCrossref。
+FILTERED_JOURNALS = [
+    {"journal": "Frontiers in Molecular Biosciences", "issn": "2296-889X"},
+]
 
 # --- abstract補完用 (OpenAlex) ---
 # 2026年2月よりAPIキーが必須。openalex.org で無料アカウント登録し、
@@ -195,3 +201,9 @@ KEYWORDS = [
 # ヒットした記事の割合、またはヒット数の合計のどちらかを満たせば目立たせる。
 JOURNAL_HOT_MIN_HIT_RATIO = 0.3
 JOURNAL_HOT_MIN_HITS = 3
+
+# --- 著者ウォッチリスト ---
+# ここに載せた名前が著者欄に含まれる記事は、キーワードのヒット数に関わらず
+# 目立つように表示される(大小文字を区別しない部分一致)。
+# フルネームで書いてください(例: "Michael Shirts")。
+AUTHOR_WATCHLIST = []
