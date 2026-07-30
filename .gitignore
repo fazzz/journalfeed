@@ -1,7 +1,5 @@
-articles.db
 mendeley_token.json
-config.py
-reports/
 __pycache__/
 *.pyc
 .venv/
+.env

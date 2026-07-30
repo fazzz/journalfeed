@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 """
 設定ファイル。
 
@@ -75,7 +76,7 @@ DB_PATH = "articles.db"
 
 # Crossref API の「polite pool」(応答が安定しやすい)を使うため、
 # 自分のメールアドレスに変更してください
-CROSSREF_MAILTO = "yu.yamamori@alumni.tus.ac.jp"
+CROSSREF_MAILTO = os.environ.get("CROSSREF_MAILTO", "your_email@example.com")
 
 # Crossref への問い合わせ間隔(秒)。連続アクセスで先方に負荷をかけないためのマナー
 CROSSREF_REQUEST_INTERVAL = 1.0
@@ -93,7 +94,7 @@ ROWS_PER_QUERY = 100
 # 2026年2月よりAPIキーが必須。openalex.org で無料アカウント登録し、
 # https://openalex.org/settings/api でキーを取得して設定してください。
 # (DOI単体でのlookupは無料枠の対象外で、実質無制限に使えます)
-OPENALEX_API_KEY = "aw92bKl5NYN9jqcA6x3tg8"
+OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "your_openalex_api_key")
 OPENALEX_REQUEST_INTERVAL = 0.2
 
 # 補完を諦めるまでの猶予日数。
@@ -106,7 +107,6 @@ ABSTRACT_GIVEUP_DAYS = 7
 # GitHub Actions等で自動化する際にconfig.pyへキーを直書きしなくて済むよう、
 # 環境変数 ANTHROPIC_API_KEY からも読めるようにしている。
 # (config.py に直接書いてもよいが、gitにコミットしないよう .gitignore を忘れずに)
-import os
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "your_anthropic_api_key")
 
 # 定型的な要約タスクなのでコスト効率のよいHaikuを既定にしている。
@@ -140,13 +140,8 @@ KEYWORDS = [
     "enhanced sampling",
     "free energy",
     "coarse-grained",
-    "replica exchange",
     "metadynamics",
     "molecular dynamics",
-    "folding",
-    "alphafold",
-    "alchemical free energy",
-    "free energy puterbation", 
 ]
 
 # ジャーナルの見出しを「ヒットが多い」として目立たせる閾値。

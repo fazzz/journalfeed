@@ -222,3 +222,63 @@ DB内で `mendeley_added = 0` の記事(まだMendeleyに登録していない�
   上に来るように自動的に並べ替えられる(従来のジャーナル名順ではなくなった点に注意)。
 
 キーワードは大文字小文字を区別せず、単純な部分一致で判定しています。
+
+## GitHub Actionsでの日次自動化
+
+`main.py`(取得)→ `enrich_abstracts.py`(abstract補完)→ `report.py`(レポート生成)
+を毎日自動実行し、結果(`articles.db` と `reports/`)をリポジトリにコミットします。
+Step2(LLM要約)は課金が発生するため、あえて自動化から外しています
+(要約したい場合は手元で `python summarize.py` を実行してください)。
+
+### セットアップ手順
+
+1. **秘密情報をconfig.pyから環境変数ベースに変更済み**
+   `CROSSREF_MAILTO` と `OPENALEX_API_KEY` は、もう `config.py` に直書きされて
+   いません(`os.environ.get(...)` 経由で読む形に変更済み)。そのため
+   `config.py` はそのままgitにコミットして問題ありません
+   (`.gitignore` からも外しました)。
+
+   ローカルで実行する際は、これまで通り環境変数を設定してください:
+   ```bash
+   export CROSSREF_MAILTO="あなたのメールアドレス"
+   export OPENALEX_API_KEY="あなたのOpenAlex APIキー"
+   export ANTHROPIC_API_KEY="あなたのAnthropic APIキー"
+   ```
+
+2. **GitHubリポジトリを作成し、このフォルダの中身をpushする**
+   ```bash
+   git init
+   git add .
+   git commit -m "initial commit"
+   git branch -M main
+   git remote add origin https://github.com/<your-account>/journalfeed.git
+   git push -u origin main
+   ```
+   (`articles.db` が既にある場合はそれも一緒にコミットされます。無ければ空の
+   状態からスタートし、初回のActions実行で作られます。)
+
+3. **リポジトリにSecretsを登録する**
+   GitHubリポジトリの Settings → Secrets and variables → Actions →
+   New repository secret から、以下を登録:
+   - `CROSSREF_MAILTO`
+   - `OPENALEX_API_KEY`
+
+4. **Actionsの書き込み権限を確認する**
+   Settings → Actions → General → Workflow permissions で
+   「Read and write permissions」になっていることを確認してください
+   (デフォルトのままだとpushに失敗することがあります)。
+
+5. **動作確認**
+   Actionsタブ → "journalfeed daily crawl" → "Run workflow" で手動実行できます。
+   スケジュール実行は毎日 UTC 21:00(日本時間 朝6:00)です
+   (`.github/workflows/daily.yml` の `cron` で変更可能)。
+
+### 運用イメージ
+
+- 毎朝、自動でDBとレポートが更新され、リポジトリにコミットされる
+- あなたは `git pull` して `reports/latest.html` を見るか、GitHubの
+  Web UI上でファイルを直接開いて確認する
+- 気になる論文があれば、そのままレポート上でチェック→書き出し→
+  手元で `python mendeley_sync.py --dois-file ...` を実行してMendeleyに登録
+- 要約が欲しくなったら、任意のタイミングで手元 or 別のActionsワークフローで
+  `python summarize.py` を実行(このワークフローには含まれていません)
