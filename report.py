@@ -22,6 +22,7 @@ from config import (
     DB_PATH,
     REPORT_OUTPUT_DIR,
     REPORT_LOOKBACK_DAYS,
+    DOCS_OUTPUT_PATH,
     KEYWORDS,
     JOURNAL_HOT_MIN_HIT_RATIO,
     JOURNAL_HOT_MIN_HITS,
@@ -170,9 +171,14 @@ def build_report():
     latest_path = out_dir / "latest.html"
     latest_path.write_text(html, encoding="utf-8")
 
+    docs_path = BASE_DIR / DOCS_OUTPUT_PATH
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(html, encoding="utf-8")
+
     print(f"{len(articles)} 件を {len(grouped)} 誌ぶんまとめました。")
     print(f"生成しました: {dated_path}")
     print(f"最新版: {latest_path}")
+    print(f"GitHub Pages公開用: {docs_path}")
     return dated_path
 
 

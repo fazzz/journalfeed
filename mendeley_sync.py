@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-DB内でまだMendeleyに登録していない記事(mendeley_added = 0)を、
-Mendeleyライブラリに登録する。
+Mendeleyへのドキュメント登録スクリプト。
+
+デフォルトでは DB内の未登録記事(mendeley_added = 0)を全件登録するが、
+--dois-file でDOI一覧ファイル(1行1DOI)を渡すと、その記事だけを登録する。
+report.py が出力するHTMLレポート上でチェックを入れて書き出した
+selected_dois.txt をそのまま渡す使い方を想定している。
 
 事前に `python mendeley_auth.py` を一度実行しておくこと。
 
 使い方:
-    python mendeley_sync.py
+    python mendeley_sync.py                          # 未登録の記事を全件登録
+    python mendeley_sync.py --dois-file selected_dois.txt  # 指定したDOIだけ登録
 """
 
+import argparse
 import time
+from pathlib import Path
 
 from config import DB_PATH, MENDELEY_REQUEST_INTERVAL
-from db import get_conn, unsynced_to_mendeley, mark_mendeley_synced
+from db import get_conn, unsynced_to_mendeley, get_articles_by_dois, mark_mendeley_synced
 from mendeley_client import get_valid_access_token, add_document
 
 
@@ -25,10 +32,27 @@ def _extract_year(pub_date):
         return None
 
 
-def run():
+def _read_dois_file(path):
+    text = Path(path).read_text(encoding="utf-8")
+    dois = []
+    for line in text.splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            dois.append(line)
+    return dois
+
+
+def run(dois_file=None):
     conn = get_conn(DB_PATH)
-    targets = unsynced_to_mendeley(conn)
-    print(f"Mendeley未登録の記事: {len(targets)} 件")
+
+    if dois_file:
+        dois = _read_dois_file(dois_file)
+        print(f"{dois_file} から {len(dois)} 件のDOIを読み込みました")
+        targets = get_articles_by_dois(conn, dois)
+    else:
+        targets = unsynced_to_mendeley(conn)
+
+    print(f"Mendeleyに登録する記事: {len(targets)} 件")
 
     if not targets:
         conn.close()
@@ -64,4 +88,12 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser(description="Mendeleyへのドキュメント登録")
+    parser.add_argument(
+        "--dois-file",
+        type=str,
+        default=None,
+        help="登録したい記事のDOI一覧ファイル(1行1DOI)。省略時は未登録分を全件登録。",
+    )
+    args = parser.parse_args()
+    run(dois_file=args.dois_file)

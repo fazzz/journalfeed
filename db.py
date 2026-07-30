@@ -142,6 +142,18 @@ def unsynced_to_mendeley(conn):
     ).fetchall()
 
 
+def get_articles_by_dois(conn, dois):
+    """指定したDOIのリストに該当する記事を取得する(選択登録用)。"""
+    if not dois:
+        return []
+    placeholders = ",".join("?" for _ in dois)
+    query = (
+        "SELECT doi, journal, title, authors, pub_date, abstract "
+        f"FROM articles WHERE doi IN ({placeholders})"
+    )
+    return conn.execute(query, dois).fetchall()
+
+
 def mark_mendeley_synced(conn, doi):
     """Mendeleyへの登録が完了した記事に印を付ける。"""
     conn.execute("UPDATE articles SET mendeley_added = 1 WHERE doi = ?", (doi,))

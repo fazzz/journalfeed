@@ -119,12 +119,16 @@ SUMMARY_REQUEST_INTERVAL = 0.5
 REPORT_OUTPUT_DIR = "reports"
 REPORT_LOOKBACK_DAYS = 7  # 直近何日分(fetched_at基準)をレポートに含めるか
 
+# GitHub Pagesで公開する場合の出力先(Pagesの公開元を "main" / "docs" に設定する想定)。
+# report.py実行のたびに、最新のレポートをこのパスにも書き出す。
+DOCS_OUTPUT_PATH = "docs/index.html"
+
 # --- Mendeley連携用 ---
 # https://dev.mendeley.com で無料でアプリ登録し、CLIENT_ID/CLIENT_SECRETを取得。
 # アプリ登録時の「Redirect URL」は、下の MENDELEY_REDIRECT_URI と
 # 完全に一致させること(末尾のスラッシュの有無なども)。
-MENDELEY_CLIENT_ID = "your_mendeley_client_id"
-MENDELEY_CLIENT_SECRET = "your_mendeley_client_secret"
+MENDELEY_CLIENT_ID = "24369"
+MENDELEY_CLIENT_SECRET = os.environ.get("MENDELEY_CLIENT_SECRET")
 MENDELEY_REDIRECT_URI = "http://localhost:8765/oauth/callback"
 
 # 認証後のaccess_token/refresh_tokenを保存するファイル。

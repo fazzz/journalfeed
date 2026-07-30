@@ -282,3 +282,21 @@ Step2(LLM要約)は課金が発生するため、あえて自動化から外し�
   手元で `python mendeley_sync.py --dois-file ...` を実行してMendeleyに登録
 - 要約が欲しくなったら、任意のタイミングで手元 or 別のActionsワークフローで
   `python summarize.py` を実行(このワークフローには含まれていません)
+
+## GitHub Pagesでの公開
+
+`python report.py` を実行すると、これまでの `reports/` に加えて
+`docs/index.html` にも同じ内容を書き出すようにしています。GitHub Pagesの
+公開元をこの `docs/` フォルダに設定すれば、毎日Actionsが自動更新した
+最新レポートを固定URLで見られるようになります。
+
+### 設定手順(初回のみ)
+
+1. 一度 `python main.py && python enrich_abstracts.py && python report.py` を
+   実行するか、Actionsを1回手動実行(workflow_dispatch)して `docs/index.html`
+   をリポジトリに作っておく(空のリポジトリだと選択肢に出てこないため)。
+2. GitHubリポジトリの **Settings → Pages** を開く
+3. "Build and deployment" の Source を **Deploy from a branch** にし、
+   Branch を **main** / **/docs** に設定して Save
+4. 数分待つと、`https://<あなたのアカウント>.github.io/<リポジトリ名>/` で
+   レポートが見られるようになる(以降は毎日のActions実行のたびに自動更新)
