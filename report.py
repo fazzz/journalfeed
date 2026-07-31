@@ -27,6 +27,7 @@ from config import (
     JOURNAL_HOT_MIN_HIT_RATIO,
     JOURNAL_HOT_MIN_HITS,
     AUTHOR_WATCHLIST,
+    TREND_WEEKS,
 )
 from db import get_conn, recent_articles_for_report
 from keyword_utils import matched_keywords
@@ -113,12 +114,64 @@ def _build_article_view(row):
     }
 
 
+def _build_keyword_trends(conn, keywords, weeks):
+    """直近weeks週分について、週ごとに各キーワードが何件の記事にヒットしたかを
+    集計する(articles.db全体が対象。REPORT_LOOKBACK_DAYSの範囲に限らない)。
+
+    戻り値: (trends, label_start, label_end)
+      trends: [{"keyword": kw, "bars": [{"count": c, "height_pct": p}, ...], "total": N}, ...]
+              (KEYWORDSの記載順、ヒットが1件も無いキーワードは除外)
+      label_start / label_end: 集計対象期間の先頭/末尾の日付文字列(MM/DD)
+    """
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    bins = []
+    for i in range(weeks, 0, -1):
+        start = now - timedelta(days=7 * i)
+        end = now - timedelta(days=7 * (i - 1))
+        bins.append((start, end))
+
+    rows = conn.execute("SELECT title, abstract, fetched_at FROM articles").fetchall()
+
+    counts = {kw: [0] * weeks for kw in keywords}
+    for title, abstract, fetched_at in rows:
+        try:
+            dt = datetime.fromisoformat(fetched_at)
+        except (TypeError, ValueError):
+            continue
+        for idx, (start, end) in enumerate(bins):
+            if start <= dt < end:
+                for kw in matched_keywords(title, abstract, keywords):
+                    counts[kw][idx] += 1
+                break
+
+    trends = []
+    for kw in keywords:
+        series = counts[kw]
+        total = sum(series)
+        if total == 0:
+            continue
+        max_count = max(series) or 1
+        bars = [
+            {"count": c, "height_pct": round(c / max_count * 100)}
+            for c in series
+        ]
+        trends.append({"keyword": kw, "bars": bars, "total": total})
+
+    label_start = bins[0][0].strftime("%m/%d")
+    label_end = bins[-1][1].strftime("%m/%d")
+    return trends, label_start, label_end
+
+
 def build_report():
     conn = get_conn(DB_PATH)
     since = (
         datetime.now(timezone.utc) - timedelta(days=REPORT_LOOKBACK_DAYS)
     ).strftime("%Y-%m-%d %H:%M:%S")
     rows = recent_articles_for_report(conn, since)
+
+    keyword_trends, trend_label_start, trend_label_end = _build_keyword_trends(
+        conn, KEYWORDS, TREND_WEEKS
+    )
     conn.close()
 
     articles = [_build_article_view(r) for r in rows]
@@ -134,6 +187,18 @@ def build_report():
     # AUTHOR_WATCHLISTの記載順を保ちつつ、ヒットが1件以上あるものだけ残す
     author_highlights = [
         author_highlight_map[name] for name in AUTHOR_WATCHLIST if name in author_highlight_map
+    ]
+
+    # キーワードごとのヒット件数(フィルタ用タグ表示に使う)。
+    # ヒットが1件も無いキーワードは表示しない。
+    keyword_highlight_map = {}
+    for a in articles:
+        for kw in a["keyword_hits"]:
+            keyword_highlight_map[kw] = keyword_highlight_map.get(kw, 0) + 1
+    keyword_highlights = [
+        {"keyword": kw, "count": keyword_highlight_map[kw]}
+        for kw in KEYWORDS
+        if kw in keyword_highlight_map
     ]
 
     grouped_dict = OrderedDict()
@@ -187,6 +252,10 @@ def build_report():
     html = template.render(
         grouped=grouped,
         author_highlights=author_highlights,
+        keyword_highlights=keyword_highlights,
+        keyword_trends=keyword_trends,
+        trend_label_start=trend_label_start,
+        trend_label_end=trend_label_end,
         generated_at=today_str,
         lookback_days=REPORT_LOOKBACK_DAYS,
         total_count=len(articles),

@@ -29,6 +29,50 @@
   header { margin-bottom: 2.5rem; }
   header h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
   header p { color: var(--muted); margin: 0; font-size: 0.9rem; }
+
+  .trend-section { margin-bottom: 1.6rem; }
+  .trend-summary {
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--accent);
+    user-select: none;
+    padding: 0.3rem 0;
+  }
+  .trend-summary:hover { text-decoration: underline; }
+  .trend-body {
+    margin-top: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .trend-row { display: flex; align-items: center; gap: 0.7rem; }
+  .trend-label {
+    width: 170px;
+    flex-shrink: 0;
+    font-size: 0.76rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .trend-total { color: var(--text); font-weight: 600; margin-left: 0.3rem; }
+  .trend-bars {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 32px;
+  }
+  .trend-bar {
+    flex: 1;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    opacity: 0.75;
+  }
+  @media (max-width: 720px) {
+    .trend-label { width: 110px; font-size: 0.7rem; }
+  }
   .journal-section { margin-bottom: 2.4rem; scroll-margin-top: 11rem; }
   .journal-section h2 {
     font-size: 1.05rem;
@@ -69,6 +113,38 @@
     white-space: nowrap;
   }
   .author-toc-item:hover { background: #fbe6a0; }
+
+  .keyword-toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.4rem;
+    padding-bottom: 0.5rem;
+    max-height: 5rem;
+    overflow-y: auto;
+  }
+  .keyword-toc-item {
+    font-size: 0.72rem;
+    color: #8a5a20;
+    text-decoration: none;
+    background: #fbe9c8;
+    border: 1px solid #e8cf7a;
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .keyword-toc-item:hover { background: #f7dca0; }
+  .keyword-toc-item.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .keyword-toc-item.active .toc-count { color: #fff; }
+  .keyword-toc-clear {
+    background: transparent;
+    border-style: dashed;
+    color: var(--muted);
+  }
   .toc {
     display: flex;
     flex-wrap: wrap;
@@ -225,16 +301,43 @@
     <p>生成日: {{ generated_at }} / 直近 {{ lookback_days }} 日分・{{ total_count }} 件</p>
   </header>
 
+  {% if keyword_trends %}
+  <details class="trend-section">
+    <summary class="trend-summary">📈 キーワードの週次トレンド ({{ trend_label_start }} 〜 {{ trend_label_end }})</summary>
+    <div class="trend-body">
+      {% for t in keyword_trends %}
+      <div class="trend-row">
+        <div class="trend-label">{{ t.keyword }}<span class="trend-total">({{ t.total }})</span></div>
+        <div class="trend-bars">
+          {% for b in t.bars %}
+          <div class="trend-bar" style="height: {{ b.height_pct }}%;" title="{{ b.count }}件"></div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+
   {% if not grouped %}
     <p>この期間に該当する記事はありません。</p>
   {% endif %}
 
-  {% if author_highlights or grouped %}
+  {% if author_highlights or keyword_highlights or grouped %}
   <div class="sticky-nav">
     {% if author_highlights %}
     <nav class="author-toc">
       {% for h in author_highlights %}
       <a href="#{{ h.first_anchor }}" class="author-toc-item">⭐ {{ h.name }}<span class="toc-count">({{ h.count }})</span></a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+
+    {% if keyword_highlights %}
+    <nav class="keyword-toc">
+      <a href="#" class="keyword-toc-item keyword-toc-clear" onclick="clearKeywordFilter(); return false;">すべて表示</a>
+      {% for k in keyword_highlights %}
+      <a href="#" class="keyword-toc-item" data-keyword="{{ k.keyword|lower }}" onclick="filterByKeyword(this); return false;">🔑 {{ k.keyword }}<span class="toc-count">({{ k.count }})</span></a>
       {% endfor %}
     </nav>
     {% endif %}
@@ -254,7 +357,7 @@
     <h2 title="{{ g.journal }}">{{ g.display_name }} ({{ g.count }}){% if g.is_hot %}<span class="journal-hot-badge">🔥 ヒット多数({{ g.hit_articles }}/{{ g.count }})</span>{% endif %}</h2>
     <div class="article-grid">
     {% for a in g.articles %}
-    <article class="article kw-{{ a.display_tier }}" id="{{ a.anchor_id }}">
+    <article class="article kw-{{ a.display_tier }}" id="{{ a.anchor_id }}" data-keywords="{{ a.keyword_hits|join(',')|lower }}">
       <details>
         <summary class="article-collapsed-summary">
           <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}" onclick="event.stopPropagation()">
@@ -325,6 +428,52 @@
     URL.revokeObjectURL(url);
   });
 })();
+
+function _applyKeywordVisibility(activeKeyword) {
+  var articles = document.querySelectorAll('.article');
+  articles.forEach(function (a) {
+    if (!activeKeyword) {
+      a.style.display = '';
+      return;
+    }
+    var kws = (a.getAttribute('data-keywords') || '')
+      .split(',')
+      .map(function (s) { return s.trim(); })
+      .filter(Boolean);
+    a.style.display = kws.indexOf(activeKeyword) !== -1 ? '' : 'none';
+  });
+
+  var sections = document.querySelectorAll('.journal-section');
+  sections.forEach(function (s) {
+    var arts = s.querySelectorAll('.article');
+    var anyVisible = Array.prototype.some.call(arts, function (a) {
+      return a.style.display !== 'none';
+    });
+    s.style.display = anyVisible ? '' : 'none';
+  });
+}
+
+function filterByKeyword(el) {
+  var items = document.querySelectorAll('.keyword-toc-item');
+  var wasActive = el.classList.contains('active');
+
+  items.forEach(function (i) { i.classList.remove('active'); });
+
+  if (wasActive) {
+    _applyKeywordVisibility(null);
+    return;
+  }
+
+  el.classList.add('active');
+  _applyKeywordVisibility(el.getAttribute('data-keyword'));
+}
+
+function clearKeywordFilter() {
+  document.querySelectorAll('.keyword-toc-item').forEach(function (i) {
+    i.classList.remove('active');
+  });
+  _applyKeywordVisibility(null);
+}
 </script>
 </body>
 </html>

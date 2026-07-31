@@ -193,8 +193,32 @@ KEYWORDS = [
     "enhanced sampling",
     "free energy",
     "coarse-grained",
-    "metadynamics",
     "molecular dynamics",
+    "replica exchange",
+    "metadynamics",
+    "alchemical free energy",
+    "protein folding",
+    "alphafold",
+    "protein design",
+    "BAOA integrator",
+    "Multiple Bennet acceptance ratio",
+    "WHAM",
+    "MDTraj",
+    "MDAnalysis",
+    "umbrella sampling",
+    "Markov state model",
+    "transition path sampling",
+    "collective variable",
+    "machine learning potential",
+    "OpenMM",
+    "GROMACS",
+    "free energy perturbation",
+    "protein language model",
+    "diffusion model",
+    "de novo protein design",
+    "RFdiffusion",
+    "ProteinMPNN",
+    "cryo-EM",
 ]
 
 # ジャーナルの見出しを「ヒットが多い」として目立たせる閾値。
@@ -206,38 +230,8 @@ JOURNAL_HOT_MIN_HITS = 3
 # ここに載せた名前が著者欄に含まれる記事は、キーワードのヒット数に関わらず
 # 目立つように表示される(大小文字を区別しない部分一致)。
 # フルネームで書いてください(例: "Michael Shirts")。
-AUTHOR_WATCHLIST = [ 
-    "Benedict Leimkuhler",
-    "Benoit Roux",
-    "Brooke E. Husic",
-    "Cecilia Clementi",
-    "Chris Chipot",
-    "Christoph Dellago",
-    "Daniel M. Zuckerman",
-    "David E. Shaw",
-    "David Mobley",
-    "David W. Borhani",
-    "Douglas L. Theobald",
-    "Edward Lyman",
-    "Eric Vanden-Eijnden",
-    "Gerhard Hummer",
-    "Joe G Greener",
-    "John D. Chodera",
-    "Jürgen Köfinge",
-    "Justin Lemkul",
-    "Klaus Schulten",
-    "Kresten Lindorff-Larsen",
-    "Linfeng Zhang",
-    "luca maragliano",
-    "Michael Feig",
-    "Michael Lee",
-    "Michael R. Shirts",
-    "Noe Frank",
-    "Peter G. Wolynes",
-    "Robert Best",
-    "Robert T. McGibbon",
-    "Ronald M. Levy",
-    "Sonya M. Hanson",
-    "Vijay Pande",
-    "William L. Jorgensen",
-]
+AUTHOR_WATCHLIST = []
+
+# --- キーワードの週次トレンド表示 ---
+# レポート上に、直近何週分のキーワード出現数の推移を表示するか。
+TREND_WEEKS = 8
