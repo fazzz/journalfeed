@@ -190,32 +190,40 @@ MENDELEY_REQUEST_INTERVAL = 0.5
 # タイトル・アブストラクトに含まれるかを大文字小文字を区別せず判定する。
 # 自分の研究テーマに合わせて自由に編集してください。
 KEYWORDS = [
+    # MD手法・強化サンプリング
+    "molecular dynamics",
     "enhanced sampling",
     "free energy",
-    "coarse-grained",
-    "molecular dynamics",
+    "free energy perturbation",
+    "alchemical free energy",
     "replica exchange",
     "metadynamics",
-    "alchemical free energy",
+    "umbrella sampling",
+    "collective variable",
+    "coarse-grained",
+    "machine learning potential",
+
+    # 解析・理論
+    "Markov state model",
+    "transition path sampling",
     "protein folding",
-    "alphafold",
-    "protein design",
-    "BAOA integrator",
-    "Multiple Bennet acceptance ratio",
+
+    # 手法・ツール(積分法・自由エネルギー推定・解析ライブラリ)
+    "BAOAB integrator",
+    "Multistate Bennett acceptance ratio",
+    "MBAR",
     "WHAM",
     "MDTraj",
     "MDAnalysis",
-    "umbrella sampling",
-    "Markov state model",
-    "transition path sampling",
-    "collective variable",
-    "machine learning potential",
     "OpenMM",
     "GROMACS",
-    "free energy perturbation",
+
+    # 構造予測・タンパク質デザイン
+    "alphafold",
+    "protein design",
+    "de novo protein design",
     "protein language model",
     "diffusion model",
-    "de novo protein design",
     "RFdiffusion",
     "ProteinMPNN",
     "cryo-EM",
