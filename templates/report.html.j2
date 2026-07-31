@@ -29,7 +29,7 @@
   header { margin-bottom: 2.5rem; }
   header h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
   header p { color: var(--muted); margin: 0; font-size: 0.9rem; }
-  .journal-section { margin-bottom: 2.4rem; scroll-margin-top: 8.5rem; }
+  .journal-section { margin-bottom: 2.4rem; scroll-margin-top: 11rem; }
   .journal-section h2 {
     font-size: 1.05rem;
     border-bottom: 1px solid var(--border);
@@ -45,16 +45,36 @@
   @media (max-width: 720px) {
     .article-grid { grid-template-columns: 1fr; }
   }
-  .toc {
+  .sticky-nav {
     position: sticky;
     top: 0;
     z-index: 10;
+    background: var(--bg);
+    padding-top: 0.4rem;
+  }
+  .author-toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.4rem;
+    padding-bottom: 0.5rem;
+  }
+  .author-toc-item {
+    font-size: 0.72rem;
+    color: #7a5c00;
+    text-decoration: none;
+    background: #fdf1c8;
+    border: 1px solid #e8cf7a;
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+    white-space: nowrap;
+  }
+  .author-toc-item:hover { background: #fbe6a0; }
+  .toc {
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
     gap: 0.3rem 0.4rem;
-    background: var(--bg);
-    padding: 0.7rem 0.2rem 0.8rem;
+    padding: 0.3rem 0.2rem 0.8rem;
     margin-bottom: 1.6rem;
     border-bottom: 1px solid var(--border);
     max-height: 7rem;
@@ -77,6 +97,7 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 0.7rem 1.1rem;
+    scroll-margin-top: 11rem;
   }
   .meta { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.6rem; }
   .summary { font-size: 0.92rem; margin: 0; padding: 0.55rem 0.7rem; border-radius: 6px; }
@@ -208,12 +229,24 @@
     <p>この期間に該当する記事はありません。</p>
   {% endif %}
 
-  {% if grouped %}
-  <nav class="toc">
-    {% for g in grouped %}
-    <a href="#journal-{{ g.slug }}" class="toc-item{% if g.is_hot %} hot{% endif %}" title="{{ g.journal }}">{{ g.display_name }}<span class="toc-count">({{ g.count }})</span>{% if g.is_hot %}<span class="toc-fire">🔥</span>{% endif %}</a>
-    {% endfor %}
-  </nav>
+  {% if author_highlights or grouped %}
+  <div class="sticky-nav">
+    {% if author_highlights %}
+    <nav class="author-toc">
+      {% for h in author_highlights %}
+      <a href="#{{ h.first_anchor }}" class="author-toc-item">⭐ {{ h.name }}<span class="toc-count">({{ h.count }})</span></a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+
+    {% if grouped %}
+    <nav class="toc">
+      {% for g in grouped %}
+      <a href="#journal-{{ g.slug }}" class="toc-item{% if g.is_hot %} hot{% endif %}" title="{{ g.journal }}">{{ g.display_name }}<span class="toc-count">({{ g.count }})</span>{% if g.is_hot %}<span class="toc-fire">🔥</span>{% endif %}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
   {% endif %}
 
   {% for g in grouped %}
@@ -221,7 +254,7 @@
     <h2 title="{{ g.journal }}">{{ g.display_name }} ({{ g.count }}){% if g.is_hot %}<span class="journal-hot-badge">🔥 ヒット多数({{ g.hit_articles }}/{{ g.count }})</span>{% endif %}</h2>
     <div class="article-grid">
     {% for a in g.articles %}
-    <article class="article kw-{{ a.display_tier }}">
+    <article class="article kw-{{ a.display_tier }}" id="{{ a.anchor_id }}">
       <details>
         <summary class="article-collapsed-summary">
           <input type="checkbox" class="select-doi" data-doi="{{ a.doi }}" onclick="event.stopPropagation()">

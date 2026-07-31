@@ -109,6 +109,7 @@ def _build_article_view(row):
         "author_hits": author_matches,
         "author_hit_count": author_hit_count,
         "display_tier": display_tier,
+        "anchor_id": f"article-{_slugify(doi)}",
     }
 
 
@@ -121,6 +122,19 @@ def build_report():
     conn.close()
 
     articles = [_build_article_view(r) for r in rows]
+
+    # 著者ウォッチリストにヒットした記事だけを対象に、ジャンプリンク用のサマリーを作る
+    author_highlight_map = {}
+    for a in articles:
+        for name in a["author_hits"]:
+            entry = author_highlight_map.setdefault(
+                name, {"name": name, "count": 0, "first_anchor": a["anchor_id"]}
+            )
+            entry["count"] += 1
+    # AUTHOR_WATCHLISTの記載順を保ちつつ、ヒットが1件以上あるものだけ残す
+    author_highlights = [
+        author_highlight_map[name] for name in AUTHOR_WATCHLIST if name in author_highlight_map
+    ]
 
     grouped_dict = OrderedDict()
     for a in sorted(articles, key=lambda a: a["journal"] or ""):
@@ -172,6 +186,7 @@ def build_report():
     today_str = datetime.now().strftime("%Y-%m-%d")
     html = template.render(
         grouped=grouped,
+        author_highlights=author_highlights,
         generated_at=today_str,
         lookback_days=REPORT_LOOKBACK_DAYS,
         total_count=len(articles),
