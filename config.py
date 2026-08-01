@@ -243,3 +243,9 @@ AUTHOR_WATCHLIST = []
 # --- キーワードの週次トレンド表示 ---
 # レポート上に、直近何週分のキーワード出現数の推移を表示するか。
 TREND_WEEKS = 8
+
+# --- SNSカード風スナップショット画像(researchmap等への埋め込み用) ---
+SNAPSHOT_LOOKBACK_HOURS = 24  # 何時間以内に取得した記事を「本日分」として扱うか
+SNAPSHOT_OUTPUT_PATH = "docs/snapshot.png"
+SNAPSHOT_PAGE_PATH = "docs/snapshot.html"
+SNAPSHOT_MAX_HEADLINES = 5
