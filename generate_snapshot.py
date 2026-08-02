@@ -164,7 +164,8 @@ def build_snapshot():
         color = COLOR_TIER.get(item["tier"], COLOR_TIER[0])
         draw.ellipse([(MARGIN, y + 8), (MARGIN + 14, y + 22)], fill=color)
 
-        title_text = _truncate(draw, item["title"], font_headline, max_text_width)
+        title = item["title"].replace("\n", " ")
+        title_text = _truncate(draw, title, font_headline, max_text_width)
         draw.text((MARGIN + 26, y), title_text, font=font_headline, fill=COLOR_TEXT)
         draw.text((MARGIN + 26, y + 30), item["journal"], font=font_meta, fill=COLOR_MUTED)
 
