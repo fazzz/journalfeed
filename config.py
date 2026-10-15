@@ -169,7 +169,7 @@ JOURNAL_ABBREV_FILE = "journal_abbreviations.json"
 
 # --- 古いデータのアーカイブ用 ---
 # articles.db に残す期間(日)。これより古い fetched_at の記事はアーカイブに移す。
-ARCHIVE_KEEP_DAYS = 180
+ARCHIVE_KEEP_DAYS = 60 #180
 ARCHIVE_DIR = "archives"
 
 # --- Mendeley連携用 ---
